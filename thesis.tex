@@ -131,6 +131,12 @@
       Title of your Thesis
   }
 
+%to fix the incorrect translation of Bachelor- and Maser-Arbeit
+\makeatletter 
+ \tud@localization@english{\bachelorthesisname}{Bachelor's Thesis}
+ \tud@localization@english{\masterthesisname}{Master's Thesis}
+\makeatother
+
   \thesis{master} % the type of thesis you want to write, e.g., master, bachelor
   \graduation[M.Sc.]{Master of Science}
 
