@@ -1,16 +1,26 @@
 \documentclass[
   english, % change to ngerman for german theses
-  symmetric, % use two-side for booklike layouts
-  cdfont=on, % modify this to use the TUD font (Open Sans)
+  twoside=semi, % use twoside for booklike layouts
   numbers=noenddot % remove trailing dots in chapter/section/... enumeration
-]{tudscrreprt}
-% use a custom serif font
-\usepackage[bitstream-charter]{mathdesign}
-% make chapter, section, ... use serif font
-\addtokomafont{disposition}{\rmfamily}
+]{scrreprt}
 
-\usepackage[T1]{fontenc}
-\usepackage[utf8]{inputenc}
+%% ============================================================
+%% Font setup (engine-conditional)
+%% ============================================================
+\usepackage{iftex}
+\ifluatex
+  \usepackage{fontspec}
+  \setmainfont{XCharter}
+  \setsansfont[BoldFont={Noto Sans SemiBold}]{Noto Sans}
+  \setmonofont{Noto Sans Mono}
+\else
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage[bitstream-charter]{mathdesign}
+  \usepackage{noto-sans} % adds Noto Sans as \sffamily without changing body default
+\fi
+% heading font and color are set in tud-titlepage.sty (Noto Sans, Brilliantblau)
+
 \usepackage[
   english % change to ngerman for german theses
 ]{babel}
@@ -36,6 +46,7 @@
 
 % make all links clickable but hide ugly boxes
 \usepackage[hidelinks]{hyperref}
+\usepackage{amsmath} % must precede cleveref (tcolorbox also loads it internally)
 % automatically insert Fig. X in the text with \cref{..}
 \usepackage[capitalise,nameinlink,noabbrev]{cleveref}
 
@@ -55,8 +66,6 @@
 \crefname{defs}{Def.}{Defs.}
 
 \usepackage{blindtext}
-
-%\usepackage{tudscrsupervisor} % if you want to copy the sources of the task description into the thesis
 
 \usepackage{csquotes}
 
@@ -90,11 +99,13 @@
 \usepackage{ellipsis}
 \let\ellipsispunctuation\relax
 
+\usepackage{tcolorbox}
+\tcbuselibrary{many}
+\usetikzlibrary{calc}
+\usepackage{fontawesome5}
+
 \input{lst} % code styles (listings)
 
-% use this custom theorem for research questions
-\newtheorem{researchquestion}{Research Question}
-\crefname{researchquestion}{Research Question}{Research Questions}
 
 % use this custom environment for equations
 \newenvironment{conditions}
@@ -114,44 +125,96 @@
   \bgroup\let\addcontentsline=\nocontentsline#1{#2}\egroup
 }
 
+% Page layout — standard German thesis margins (overrides KOMA typearea)
+\usepackage[
+  a4paper,
+  left=3cm,
+  right=2.5cm,
+  top=2.5cm,
+  bottom=2.5cm,
+  twoside=false, % twoside=semi means symmetric text area; suppress geometry mirroring
+]{geometry}
+
+\usepackage{tud-colors}    % TUD CD color palette
+\usepackage{tud-titlepage} % title page + metadata commands (\faculty, \thesis, ...)
+\usepackage{tud-thesis}    % heading styling + \confirmation
+% For black headings add: \renewcommand{\headingcolor}{black}
+
+% Research question box
+% Change \researchquestioncolor (border + title tab) and \researchquestionbgcolor (fill)
+% to any xcolor name or expression, e.g. \renewcommand{\researchquestioncolor}{Rot1}
+\newcommand{\researchquestiontitle}{Research Questions}
+\newcommand{\researchquestioncolor}{Brilliantblau}
+\newcommand{\researchquestionbgcolor}{Blau2!30!white}
+\newenvironment{research-question}{%
+  \renewcommand{\labelitemi}{\color{\researchquestioncolor}\faIcon{caret-right}}%
+  \begin{itemize}[leftmargin=0.5em, labelwidth=0.5em, rightmargin=0.0em,
+                  itemsep=0pt, labelsep=0.3em]%
+}{\end{itemize}}
+\tcolorboxenvironment{research-question}{
+  title={\researchquestiontitle},
+  left=0.5em,
+  right=0.5em,
+  fonttitle=\sffamily\bfseries,
+  width=\linewidth-3pt,
+  enhanced,
+  attach boxed title to top left,
+  coltitle=white,
+  colback=\researchquestionbgcolor,
+  arc=2pt,
+  boxed title style={empty, arc=0pt, outer arc=0pt, boxrule=0pt},
+  frame style={empty, arc=0pt, outer arc=0pt, boxrule=0pt},
+  underlay boxed title={
+    \draw[fill=\researchquestioncolor, draw=\researchquestioncolor, line width=2pt]
+      ([yshift=-2pt]title.north west)
+      arc[radius=2pt, start angle=180, end angle=90]
+      -- (title.north east)
+      arc[radius=3pt, start angle=90, end angle=45]
+      -- ($(title.north east) + (\tcboxedtitleheight,-\tcboxedtitleheight)$)
+      -- (title.south west) -- cycle;
+  },
+  frame code={
+    \draw[fill=\researchquestionbgcolor, draw=\researchquestioncolor, line width=2pt]
+      (frame.north west)
+      -- ([yshift=2pt]frame.south west)
+      arc[radius=2pt, start angle=180, end angle=270]
+      -- ([xshift=-2pt]frame.south east)
+      arc[radius=2pt, start angle=-90, end angle=0]
+      -- ([yshift=-2pt]frame.north east)
+      arc[radius=2pt, start angle=0, end angle=90]
+      -- cycle;
+  }
+}
+
 \begin{document}
 
   % use uppercase roman letters for all pages until the introduction
   % this way, it is easier to identify how many pages the thesis has
   \pagenumbering{Roman}
 
-  %\faculty{Fakultät Informatik}
   \faculty{Faculty of Computer Science}
-  \department{}
-  %\institute{Institut für Systemarchitektur}
   \institute{Institute of Systems Architecture}
-  %\chair{Lehrstuhl Distributed and Networked Systems}
   \chair{Chair of Distributed and Networked Systems}
   \title{%
-      Title of your Thesis
+    Title of your Thesis
   }
-
-%to fix the incorrect translation of Bachelor- and Maser-Arbeit
-\makeatletter 
- \tud@localization@english{\bachelorthesisname}{Bachelor's Thesis}
- \tud@localization@english{\masterthesisname}{Master's Thesis}
-\makeatother
+  % \subtitle{An Optional Subtitle}  % uses KOMA's built-in \subtitle
 
   \thesis{master} % the type of thesis you want to write, e.g., master, bachelor
   \graduation[M.Sc.]{Master of Science}
 
   \author{Max Mustermann}
   \matriculationnumber{1234567}
-  %\matriculationyear{1970}
   \dateofbirth{1.1.1970}
   \placeofbirth{Dresden}
-
-  %\course{Master Informatik (PO 2010)}
+  \email{max.mustermann@mailbox.tu-dresden.de}
 
   \supervisor{%
     Dipl. Inf. Max Mustermann
   }
-  \professor{Prof. Dr. rer. nat. Matthias W\"ahlisch}
+  \professor{Prof. Dr. rer. nat. Matthias Wählisch}
+  \reviewer{Prof. Dr. Second Reviewer}
+  \cosupervisor{Dr. Co-Supervisor}
   \date{1.1.1970} % the date of submission
   \maketitle
 
@@ -178,9 +241,6 @@
   \input{sections/introduction}
 
   \newpage
-
-  % use lowercased roman page numbers for the appendix and the bibliography
-  %\pagenumbering{roman}
 
   \printbibliography[heading=bibintoc]\label{sec:bibliography}%
 
