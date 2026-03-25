@@ -1,0 +1,203 @@
+%% tud-titlepage.sty
+%% TU Dresden Corporate Design title page for KOMA-Script thesis template.
+%% Provides metadata commands (\faculty, \thesis, \supervisor, etc.) and
+%% redefines \maketitle to produce a TUD-CD-compliant title page.
+
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{tud-titlepage}[2026/04/01 TUD CD Thesis Title Page]
+
+\@ifundefined{setkomafont}{%
+  \PackageError{tud-titlepage}%
+    {A KOMA-Script class is required}%
+    {Load scrreprt, scrartcl, or scrbook before this package.}%
+}{}
+\RequirePackage{tud-colors}
+\RequirePackage{graphicx}
+\RequirePackage{tikz}
+% \iflanguage is provided by babel (loaded in thesis.tex)
+
+%% ============================================================
+%% Title page dimensions (A4)
+%% ============================================================
+\newlength{\tud@logoheight}   \setlength{\tud@logoheight}{19mm}
+\newlength{\tud@bandwidth}    \setlength{\tud@bandwidth}{28mm}
+\newlength{\tud@bandheight}   \setlength{\tud@bandheight}{110mm}
+\newlength{\tud@marginleft}   \setlength{\tud@marginleft}{15mm}
+\newlength{\tud@marginright}  \setlength{\tud@marginright}{10mm}
+\newlength{\tud@margintop}    \setlength{\tud@margintop}{15mm}
+\newlength{\tud@marginbottom} \setlength{\tud@marginbottom}{24mm}
+% Gap between text block and accent band
+\newlength{\tud@bandgap}      \setlength{\tud@bandgap}{6mm}
+% Text content width (left margin to just before band gap)
+% = paperwidth - left - right - band - gap
+% = 210mm - 15mm - 10mm - 28mm - 6mm = 151mm
+\newlength{\tud@textwidth}
+\setlength{\tud@textwidth}{\dimexpr\paperwidth-\tud@marginleft-\tud@marginright-\tud@bandwidth-\tud@bandgap}
+
+%% ============================================================
+%% Internal metadata storage (use \def for reliable \ifx tests)
+%% ============================================================
+\def\tud@faculty{}
+\def\tud@department{}
+\def\tud@institute{}
+\def\tud@chair{}
+\def\tud@thesistype{}
+\def\tud@graduationshort{}
+\def\tud@graduationlong{}
+\def\tud@matriculationnumber{}
+\def\tud@dateofbirth{}
+\def\tud@placeofbirth{}
+\def\tud@supervisor{}
+\def\tud@professor{}
+% \subtitle is provided by KOMA-Script (scrreprt); it stores into \@subtitle
+\def\tud@cosupervisor{}
+\def\tud@email{}
+\def\tud@reviewer{}
+\def\tud@accentcolor{Brilliantblau}
+\def\tud@logovariant{en}
+
+%% ============================================================
+%% User-facing metadata commands
+%% ============================================================
+\newcommand{\faculty}[1]{\def\tud@faculty{#1}}
+\newcommand{\department}[1]{\def\tud@department{#1}}
+\newcommand{\institute}[1]{\def\tud@institute{#1}}
+\newcommand{\chair}[1]{\def\tud@chair{#1}}
+\newcommand{\thesis}[1]{\def\tud@thesistype{#1}}
+\newcommand{\graduation}[2][]{\def\tud@graduationshort{#1}\def\tud@graduationlong{#2}}
+\newcommand{\matriculationnumber}[1]{\def\tud@matriculationnumber{#1}}
+\newcommand{\dateofbirth}[1]{\def\tud@dateofbirth{#1}}
+\newcommand{\placeofbirth}[1]{\def\tud@placeofbirth{#1}}
+\newcommand{\supervisor}[1]{\def\tud@supervisor{#1}}
+\newcommand{\professor}[1]{\def\tud@professor{#1}}
+% \subtitle is provided by KOMA-Script; no redefinition needed here
+\newcommand{\cosupervisor}[1]{\def\tud@cosupervisor{#1}}
+\newcommand{\email}[1]{\def\tud@email{#1}}
+\newcommand{\reviewer}[1]{\def\tud@reviewer{#1}}
+\newcommand{\accentcolor}[1]{\def\tud@accentcolor{#1}}
+\newcommand{\logovariant}[1]{\def\tud@logovariant{#1}}
+
+%% ============================================================
+%% Helper: thesis type label (bilingual)
+%% ============================================================
+\newcommand{\tud@thesislabel}{%
+  \def\@tud@tmpmaster{master}%
+  \ifx\tud@thesistype\@tud@tmpmaster
+    \iflanguage{ngerman}{Masterarbeit}{Master's Thesis}%
+  \else
+    \iflanguage{ngerman}{Bachelorarbeit}{Bachelor's Thesis}%
+  \fi
+}
+
+%% Bilingual labels
+\newcommand{\tud@lbl@supervisor}{\iflanguage{ngerman}{Betreuer}{Supervisor}}
+\newcommand{\tud@lbl@cosupervisor}{\iflanguage{ngerman}{Zweiter Betreuer}{Co-Supervisor}}
+\newcommand{\tud@lbl@reviewer}{\iflanguage{ngerman}{Gutachter}{Reviewer}}
+\newcommand{\tud@lbl@secondreviewer}{\iflanguage{ngerman}{Zweiter Gutachter}{Second Reviewer}}
+\newcommand{\tud@lbl@submitted}{\iflanguage{ngerman}{Eingereicht am}{Date of Submission}}
+\newcommand{\tud@lbl@matrnr}{\iflanguage{ngerman}{Matrikelnummer}{Matriculation Number}}
+\newcommand{\tud@lbl@born}{\iflanguage{ngerman}{geboren am}{born}}
+
+%% ============================================================
+%% \maketitle — TUD CD title page
+%%
+%% Uses tikz overlays for:
+%%   - accent color band (top-right)
+%%   - TUD logo (top-left)
+%%   - text content block (middle-left)
+%%   - metadata block (bottom-left)
+%% All coordinates are relative to current page corners so the
+%% layout is independent of the main document's margin settings.
+%% ============================================================
+\renewcommand{\maketitle}{%
+  \begin{titlepage}%
+    \thispagestyle{empty}%
+    \begin{tikzpicture}[remember picture, overlay]
+      %--- Accent band: top-right, \tud@bandwidth wide, \tud@bandheight tall ---%
+      \fill[\tud@accentcolor]
+        (current page.north east)
+        rectangle
+        ++(-\tud@bandwidth, -\tud@bandheight);
+      %--- TUD Logo: top-left, inset by margins ---%
+      \node[anchor=north west, inner sep=0pt, outer sep=0pt]
+        at ([xshift=\tud@marginleft, yshift=-\tud@margintop]current page.north west)
+        {\includegraphics[height=\tud@logoheight]{figures/tud-logo-\tud@logovariant}};
+      %--- Title / thesis-type content block ---%
+      %    Starts below the logo protection zone (2 × logo height = 38mm from top)
+      %    plus top margin (15mm) → 53mm from top, plus a small visual gap
+      \node[anchor=north west, inner sep=0pt, outer sep=0pt,
+            text width=\tud@textwidth, align=left]
+        at ([xshift=\tud@marginleft, yshift=-57mm]current page.north west)
+        {%
+          \setlength{\parskip}{0pt}%
+          \setlength{\parindent}{0pt}%
+          \raggedright\sffamily%
+          % Organizational hierarchy (stacked: faculty / institute / chair)
+          \ifx\tud@faculty\@empty\else
+            {\footnotesize\color{black}%
+              \tud@faculty%
+              \ifx\tud@institute\@empty\else\\\tud@institute\fi
+              \ifx\tud@chair\@empty\else\\\tud@chair\fi
+            \par\vspace{6mm}}%
+          \fi
+          % Title
+          {\fontsize{26pt}{30pt}\selectfont\bfseries\color{\tud@accentcolor}\@title\par}%
+          % Subtitle (stored by KOMA's \subtitle command into \@subtitle)
+          \ifx\@subtitle\@empty\else
+            \vspace{3mm}%
+            {\fontsize{17pt}{21pt}\selectfont\color{black}\@subtitle\par}%
+          \fi
+          \vspace{5mm}%
+          % Thesis type + degree abbreviation
+          {\large\color{black}%
+            \tud@thesislabel%
+            \ifx\tud@graduationshort\@empty\else\space(\tud@graduationshort)\fi
+          \par}%
+        };
+      %--- Metadata block: anchored to bottom-left ---%
+      \node[anchor=south west, inner sep=0pt, outer sep=0pt,
+            text width=\tud@textwidth, align=left]
+        at ([xshift=\tud@marginleft, yshift=\tud@marginbottom]current page.south west)
+        {%
+          \setlength{\parskip}{1.5pt}%
+          \setlength{\parindent}{0pt}%
+          \raggedright\sffamily%
+          % Author name
+          {\large\bfseries\@author\par}%
+          \ifx\tud@email\@empty\else
+            {\small\tud@email\par}%
+          \fi
+          \ifx\tud@matriculationnumber\@empty\else
+            {\small\tud@lbl@matrnr: \tud@matriculationnumber\par}%
+          \fi
+          \ifx\tud@dateofbirth\@empty\else
+            {\small\tud@lbl@born\ \tud@dateofbirth%
+              \ifx\tud@placeofbirth\@empty\else,\space\tud@placeofbirth\fi
+            \par}%
+          \fi
+          \vspace{4mm}%
+          % Supervisors and reviewers — two-column tabular so names left-align
+          {\small
+          \begin{tabular}[t]{@{}l@{\hspace{0.4em}}l@{}}
+            \ifx\tud@professor\@empty\else
+              \tud@lbl@reviewer: & \tud@professor \\
+            \fi
+            \ifx\tud@reviewer\@empty\else
+              \tud@lbl@secondreviewer: & \tud@reviewer \\
+            \fi
+            \ifx\tud@supervisor\@empty\else
+              \tud@lbl@supervisor: & \tud@supervisor \\
+            \fi
+            \ifx\tud@cosupervisor\@empty\else
+              \tud@lbl@cosupervisor: & \tud@cosupervisor \\
+            \fi
+          \end{tabular}%
+          \par}%
+          \vspace{4mm}%
+          % Submission date
+          {\small\tud@lbl@submitted: \@date}%
+        };
+    \end{tikzpicture}%
+    \null\vfill  % ensure the titlepage spans a full page
+  \end{titlepage}%
+}
