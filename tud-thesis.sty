@@ -1,0 +1,42 @@
+%% tud-thesis.sty
+%% General TUD thesis styling: heading font/color and statutory declaration.
+
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{tud-thesis}[2026/04/01 TUD Thesis Styling]
+
+\@ifundefined{setkomafont}{%
+  \PackageError{tud-thesis}%
+    {A KOMA-Script class is required}%
+    {Load scrreprt, scrartcl, or scrbook before this package.}%
+}{}
+\RequirePackage{tud-colors}
+
+%% ============================================================
+%% Heading font and color
+%% \headingcolor defaults to Brilliantblau; override with
+%%   \renewcommand{\headingcolor}{black}
+%% after \usepackage{tud-thesis} for monochrome output.
+%% ============================================================
+\newcommand{\headingcolor}{Brilliantblau}
+\setkomafont{disposition}{\sffamily\color{\headingcolor}}
+
+%% ============================================================
+%% \confirmation — statutory declaration page
+%% ============================================================
+\newcommand{\confirmation}{%
+  \chapter*{%
+    \iflanguage{ngerman}{Selbstständigkeitserklärung}{Statutory Declaration}%
+  }%
+  \iflanguage{ngerman}{%
+    Ich erkläre, dass ich die vorliegende Arbeit selbstständig, unter Angabe
+    aller Zitate und nur unter Verwendung der angegebenen Literatur und
+    Hilfsmittel angefertigt habe.%
+  }{%
+    I hereby declare that I prepared this thesis independently and without
+    any unauthorized assistance, that I have not used sources or means other
+    than those indicated, and that all passages taken verbatim or in substance
+    from published or unpublished works have been acknowledged as such.%
+  }%
+  \par\bigskip\noindent
+  Dresden,\space\@date\hfill\@author%
+}
