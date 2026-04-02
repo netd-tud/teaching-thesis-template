@@ -2,24 +2,9 @@
   english, % change to ngerman for german theses
   twoside=semi, % use twoside for booklike layouts
   numbers=noenddot % remove trailing dots in chapter/section/... enumeration
-]{scrreprt}
+]{scrbook}
 
-%% ============================================================
-%% Font setup (engine-conditional)
-%% ============================================================
-\usepackage{iftex}
-\ifluatex
-  \usepackage{fontspec}
-  \setmainfont{XCharter}
-  \setsansfont[BoldFont={Noto Sans SemiBold}]{Noto Sans}
-  \setmonofont{Noto Sans Mono}
-\else
-  \usepackage[T1]{fontenc}
-  \usepackage[utf8]{inputenc}
-  \usepackage[bitstream-charter]{mathdesign}
-  \usepackage{noto-sans} % adds Noto Sans as \sffamily without changing body default
-\fi
-% heading font and color are set in tud-titlepage.sty (Noto Sans, Brilliantblau)
+\usepackage{noto}
 
 \usepackage[
   english % change to ngerman for german theses
@@ -27,7 +12,6 @@
 \usepackage{isodate}
 \usepackage{pdfpages}
 \usepackage{listings}
-\usepackage[toc, page]{appendix}
 \usepackage{hyphenat}
 
 \usepackage[
@@ -114,17 +98,6 @@
 
 \usepackage{float}
 
-% configure the name of your appendix
-\renewcommand\appendixtocname{Appendix}
-\renewcommand\appendixpagename{Appendix}
-
-% use \tocless before a chapter/section/... in the
-% appendix to hide it from the toc
-\newcommand{\nocontentsline}[3]{}
-\newcommand{\tocless}[2]{
-  \bgroup\let\addcontentsline=\nocontentsline#1{#2}\egroup
-}
-
 % Page layout — standard German thesis margins (overrides KOMA typearea)
 \usepackage[
   a4paper,
@@ -188,9 +161,8 @@
 
 \begin{document}
 
-  % use uppercase roman letters for all pages until the introduction
-  % this way, it is easier to identify how many pages the thesis has
-  \pagenumbering{Roman}
+  \frontmatter
+  \pagenumbering{roman} % uppercase Roman numerals for front matter
 
   \faculty{Faculty of Computer Science}
   \institute{Institute of Systems Architecture}
@@ -218,34 +190,29 @@
   \date{1.1.1970} % the date of submission
   \maketitle
 
-  \newpage
+  % \includepdf[pages=-]{task/task.pdf}  % optional: task definition
 
-  % include the task definition if you want
-  % \includepdf[pages=-]{task/task.pdf}
-  % \newpage
-
-  % for the order of the following sections please refer to
-  % the recommendations for thesis structuring
   \confirmation
+  \input{sections/abstract}
 
   \tableofcontents
 
   \listoffigures
   \addcontentsline{toc}{chapter}{\listfigurename}
-
   \listoftables
   \addcontentsline{toc}{chapter}{\listtablename}
 
-  % this is where your thesis lives
+  \mainmatter % arabic page numbers, chapter numbering re-enabled
 
+  % this is where your thesis lives
   \input{sections/introduction}
 
-  \newpage
+  \backmatter % arabic continues, chapter numbers suppressed
 
-  \printbibliography[heading=bibintoc]\label{sec:bibliography}%
+  \printbibliography[heading=bibintoc]\label{sec:bibliography}
 
-  \begin{appendices}
-    \input{sections/appendix}
-  \end{appendices}
+  \appendix % chapter numbering switches to A, B, C…
+  \part*{Appendix}
+  \input{sections/appendix}
 
 \end{document}
