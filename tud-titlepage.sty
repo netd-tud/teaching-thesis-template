@@ -6,13 +6,13 @@
 %%     \supervisor, \cosupervisor, \professor, \reviewer, \matriculationnumber,
 %%     \dateofbirth, \placeofbirth, \email
 %%   - Three title styles via \titlestyle{...}:
-%%       plain      — white background with a colored accent band (top-right)
+%%       plain      — white background (no shapes)
 %%       unicolor   — full-page solid color background
 %%       shapes     — full-page background with the TUD CD logo-mark shape overlay
 %%   - Shape placement control: \titleshapevariant (presets 1–5),
 %%     \titleshaperotation (steps of 45°), \titleshapescale, \titleshapeoffset
 %%   - Automatic logo/text color selection based on background color
-%%   - Manual overrides: \logocolor, \logovariant, \accentcolor,
+%%   - Manual overrides: \logocolor, \logovariant,
 %%     \titlebgcolor, \titleshapecolor, \titletextcolor
 %%
 %% Requires: KOMA-Script class (scrbook/scrreprt/scrartcl), tud-colors,
@@ -39,19 +39,14 @@
 \newlength{\tud@logoheight}   \setlength{\tud@logoheight}{19mm}
 \newlength{\tud@shapeunit}
 \newlength{\tud@effectiveshapeunit}
-\newlength{\tud@bandwidth}    \setlength{\tud@bandwidth}{28mm}
-\newlength{\tud@bandheight}   \setlength{\tud@bandheight}{110mm}
 \newlength{\tud@marginleft}   \setlength{\tud@marginleft}{15mm}
 \newlength{\tud@marginright}  \setlength{\tud@marginright}{10mm}
 \newlength{\tud@margintop}    \setlength{\tud@margintop}{15mm}
-\newlength{\tud@marginbottom} \setlength{\tud@marginbottom}{24mm}
-% Gap between text block and accent band
-\newlength{\tud@bandgap}      \setlength{\tud@bandgap}{6mm}
-% Text content width (left margin to just before band gap)
-% = paperwidth - left - right - band - gap
-% = 210mm - 15mm - 10mm - 28mm - 6mm = 151mm
+\newlength{\tud@marginbottom} \setlength{\tud@marginbottom}{23.767mm}
+% Text content width (left margin to right margin)
+% = 210mm - 15mm - 10mm = 185mm
 \newlength{\tud@textwidth}
-\setlength{\tud@textwidth}{\dimexpr\paperwidth-\tud@marginleft-\tud@marginright-\tud@bandwidth-\tud@bandgap}
+\setlength{\tud@textwidth}{\dimexpr\paperwidth-\tud@marginleft-\tud@marginright}
 
 %% ============================================================
 %% Internal metadata storage (use \def for reliable \ifx tests)
@@ -72,28 +67,27 @@
 \def\tud@cosupervisor{}
 \def\tud@email{}
 \def\tud@reviewer{}
-\def\tud@accentcolor{Brilliantblau}
-\def\tud@logovariant{en}
+\def\tud@logovariant{\iflanguage{ngerman}{de}{en}}
 \def\tud@logocolor{blau}    % auto-set from bgcolor; override with \logocolor
-%% Title style (set by \titlestyle)
-\def\tud@titlestyle{plain}
-\def\tud@titlebg{0}
-\def\tud@titleshapes{0}
+%% Title style (set by \titlestyle; defaults = shapes style, variant 5)
+\def\tud@titlestyle{shapes}
+\def\tud@titlebg{1}
+\def\tud@titleshapes{1}
 \def\tud@bgcolor{white}
 \def\tud@shapecolor{Brilliantblau}
 \def\tud@titlefgcolor{black}
-\def\tud@titleaccentcolor{\tud@accentcolor}
+\def\tud@titleaccentcolor{Brilliantblau}
 \def\tud@shaperotation{0}
-\def\tud@shapescale{1}
-\def\tud@shapexoffset{0pt}
-\def\tud@shapeyoffset{-43.5mm}  % SW-anchor equivalent for A4 (=(297-210)/2)
+\def\tud@shapescale{2.75}     % variant 5
+\def\tud@shapexoffset{12.5cm} % variant 5
+\def\tud@shapeyoffset{-12.5cm} % variant 5
 
 %% Auto-detect logo color + text color from \tud@bgcolor.
 %% Any dark TUD color → weiss logo + white text; otherwise blau logo + black text.
 \newcommand{\tud@autologocolor}{%
   \def\tud@logocolor{blau}%
   \def\tud@titlefgcolor{black}%
-  \def\tud@titleaccentcolor{\tud@accentcolor}%
+  \def\tud@titleaccentcolor{Brilliantblau}%
   \@for\tud@iter:={Brilliantblau,Dunkelblau,Blau1,Violett1,Magenta1,%
                    Rot1,Orange1,Oliv1,Gruen1,Tuerkis1,Grau100,Grau80,Grau60}\do{%
     \ifx\tud@bgcolor\tud@iter
@@ -127,10 +121,10 @@
 %% ============================================================
 \setkomafont{title}{\fontsize{26pt}{30pt}\selectfont\bfseries\color{\tud@titleaccentcolor}}
 \setkomafont{subtitle}{\fontsize{17pt}{21pt}\selectfont\color{\tud@titlefgcolor}}
-\setkomafont{author}{\large\bfseries\color{\tud@titlefgcolor}}
+\setkomafont{author}{\large\bfseries\color{white}}
 \setkomafont{subject}{\large\color{\tud@titlefgcolor}}
 \newkomafont{tudorgunit}{\footnotesize\color{\tud@titlefgcolor}}
-\newkomafont{tudmeta}{\small\color{\tud@titlefgcolor}}
+\newkomafont{tudmeta}{\small\color{white}}
 
 %% ============================================================
 %% User-facing metadata commands
@@ -150,10 +144,9 @@
 \newcommand{\cosupervisor}[1]{\def\tud@cosupervisor{#1}}
 \newcommand{\email}[1]{\def\tud@email{#1}}
 \newcommand{\reviewer}[1]{\def\tud@reviewer{#1}}
-\newcommand{\accentcolor}[1]{\def\tud@accentcolor{#1}}
 \newcommand{\logovariant}[1]{\def\tud@logovariant{#1}}
 \newcommand{\logocolor}[1]{\def\tud@logocolor{#1}}
-% \titlestyle — three overloaded signatures (dispatched on mandatory #5):
+% \titlestyle — two overloaded signatures (dispatched on mandatory #5):
 %
 %   \titlestyle[textcolor][bgcolor]{unicolor}
 %     Solid color background. bgcolor defaults to Brilliantblau.
@@ -165,7 +158,6 @@
 %   \titlestyle[variant][textcolor][shapecolor][bgcolor]{shapes}
 %     Shapes style, fully custom. All optionals default to the tonal preset values.
 %
-%   \titlestyle{plain}  — plain white background, accent band
 \NewDocumentCommand{\titlestyle}{o o o o m}{%
   %--- reset all shape/bg/color state ---%
   \def\tud@titlestyle{#5}%
@@ -178,7 +170,6 @@
   %--- dispatch on mandatory style name ---%
   \def\tud@ts@uc{unicolor}%
   \def\tud@ts@sh{shapes}%
-  \def\tud@ts@pl{plain}%
   %
   \ifx\tud@titlestyle\tud@ts@uc
     %--- unicolor: #1=textcolor (opt), #2=bgcolor (opt) ---%
@@ -212,10 +203,6 @@
       \IfNoValueF{#2}{\def\tud@titlefgcolor{#2}}%
       \IfNoValueTF{#1}{\titleshapevariant{5}}{\titleshapevariant{#1}}%
     }%
-  \fi
-  % plain: no bg, no shapes — reset state is already correct; infer logo/text colors
-  \ifx\tud@titlestyle\tud@ts@pl
-    \tud@autologocolor
   \fi
 }
 \newcommand{\titlebgcolor}[1]{\def\tud@bgcolor{#1}\tud@autologocolor}
@@ -273,7 +260,6 @@
 %% Uses tikz overlays for:
 %%   - full-page background fill (unicolor / shapes styles)
 %%   - TUD CD logo-mark shape polygons (shapes style)
-%%   - accent color band, top-right (plain style only)
 %%   - TUD logo, top-left
 %%   - title / thesis-type content block, upper-left
 %%   - author / supervisor / date metadata block, lower-left
@@ -285,7 +271,7 @@
     \thispagestyle{empty}%
     \begin{tikzpicture}[remember picture, overlay]
       \def\tud@flag@one{1}%
-      %--- Full-page background fill (non-plain styles) ---%
+      %--- Full-page background fill ---%
       \ifx\tud@titlebg\tud@flag@one
         \fill[\tud@bgcolor]
           (current page.south west) rectangle (current page.north east);
@@ -307,13 +293,6 @@
           \fill[\tud@shapecolor]  % Fragment 2 (lower-left, centered at origin)
             (-300,56.5)--(-93,93)--(-93,-93)--(114,-300)--(-124.3,-300)--(-300,-124.3)--cycle;
         \end{scope}
-      \fi
-      %--- Accent band: top-right, plain style only ---%
-      \def\tud@ts@plain{plain}\ifx\tud@titlestyle\tud@ts@plain
-      \fill[\tud@accentcolor]
-        (current page.north east)
-        rectangle
-        ++(-\tud@bandwidth, -\tud@bandheight);
       \fi
       %--- TUD Logo: top-left, inset by margins ---%
       \node[anchor=north west, inner sep=0pt, outer sep=0pt]

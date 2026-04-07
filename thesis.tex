@@ -1,5 +1,5 @@
 \documentclass[
-  english, % change to ngerman for german theses
+  ngerman, % change to ngerman for german theses
   twoside=semi, % use twoside for booklike layouts
   numbers=noenddot % remove trailing dots in chapter/section/... enumeration
 ]{scrbook}
@@ -7,7 +7,7 @@
 \usepackage{noto}
 
 \usepackage[
-  english % change to ngerman for german theses
+  ngerman % change to ngerman for german theses
 ]{babel}
 \usepackage{isodate}
 \usepackage{pdfpages}
@@ -101,10 +101,10 @@
 % Page layout — standard German thesis margins (overrides KOMA typearea)
 \usepackage[
   a4paper,
-  left=3cm,
-  right=2.5cm,
-  top=2.5cm,
-  bottom=2.5cm,
+  inner=1.5cm,
+  outer=1cm,
+  top=1.5cm,
+  bottom=23.767mm,
   twoside=false, % twoside=semi means symmetric text area; suppress geometry mirroring
 ]{geometry}
 
@@ -188,7 +188,6 @@
   \reviewer{Prof. Dr. Second Reviewer}
   \cosupervisor{Dr. Co-Supervisor}
   \date{1.1.1970} % the date of submission
-  \titlestyle[5][accent]{shapes}
   \maketitle
 
   % \includepdf[pages=-]{task/task.pdf}  % optional: task definition

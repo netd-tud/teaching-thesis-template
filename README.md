@@ -76,13 +76,7 @@ Set in `thesis.tex` before `\maketitle`:
 
 ### Styles
 
-Select a style with `\titlestyle` before `\maketitle`.
-
-**`plain`** (default) — white background with a colored accent band top-right.
-
-```latex
-\titlestyle{plain}
-```
+The default style is `shapes` (variant 5, white background, Brilliantblau shape). Override with `\titlestyle` before `\maketitle`.
 
 **`unicolor`** — full-page solid color background; text and logo color auto-selected.
 
@@ -126,7 +120,6 @@ Fine-tune shape placement after `\titlestyle`:
 ### Colors and logo
 
 ```latex
-\accentcolor{Rot1}         % accent band color (plain style)
 \logovariant{de}           % switch to German logo (default: en)
 \logocolor{weiss}          % force white logo (default: auto-detected from bg color)
 \titlebgcolor{Gruen1}      % change background color after \titlestyle
