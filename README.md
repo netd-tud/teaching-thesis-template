@@ -45,9 +45,11 @@ Switch between English and German throughout the document by changing two lines 
 
 Affected text: thesis type label, supervisor/reviewer labels, submission date label, statutory declaration, abstract heading.
 
-## Title page configuration
+## Title page
 
-Set metadata in `thesis.tex` before `\maketitle`:
+### Metadata
+
+Set in `thesis.tex` before `\maketitle`:
 
 ```latex
 \faculty{Faculty of Computer Science}
@@ -72,21 +74,17 @@ Set metadata in `thesis.tex` before `\maketitle`:
 \date{1.1.1970}
 ```
 
-## Title styles
+### Styles
 
 Select a style with `\titlestyle` before `\maketitle`.
 
-### `plain` (default)
-
-White background with a colored accent band in the top-right corner.
+**`plain`** (default) — white background with a colored accent band top-right.
 
 ```latex
 \titlestyle{plain}
 ```
 
-### `unicolor`
-
-Full-page solid color background. Text and logo color are selected automatically.
+**`unicolor`** — full-page solid color background; text and logo color auto-selected.
 
 ```latex
 \titlestyle{unicolor}                          % Brilliantblau background (default)
@@ -94,9 +92,7 @@ Full-page solid color background. Text and logo color are selected automatically
 \titlestyle[textcolor][bgcolor]{unicolor}      % custom background + explicit text color
 ```
 
-### `shapes`
-
-Full-page background with the TUD CD logo-mark shape overlay.
+**`shapes`** — full-page background with the TUD CD logo-mark shape overlay.
 
 ```latex
 \titlestyle{shapes}                            % tonal scheme, variant 5 (default)
@@ -105,26 +101,20 @@ Full-page background with the TUD CD logo-mark shape overlay.
 \titlestyle[variant][text][shape][bg]{shapes}  % full custom colors
 ```
 
-**Schemes:**
-
 | Scheme | Background | Shape color |
 |--------|------------|-------------|
 | `tonal` (default) | `Dunkelblau` | `Brilliantblau` |
 | `accent` | `white` | `Blau2` |
 
-**Shape variants (1–5):**
-
-| # | Rotation | Scale | Position |
-|---|----------|-------|----------|
+| Variant | Rotation | Scale | Position |
+|---------|----------|-------|----------|
 | 1 | 90° | 4× | upper-left |
 | 2 | 90° | 2.75× | near center |
 | 3 | 0° | 2× | centered |
 | 4 | 0° | 4× | lower-right |
-| 5 | 0° | 2.75× | lower-right (default) |
+| 5 (default) | 0° | 2.75× | lower-right |
 
-### Fine-tuning shapes
-
-After `\titlestyle`, you can further adjust placement:
+Fine-tune shape placement after `\titlestyle`:
 
 ```latex
 \titleshapevariant{3}            % apply a numbered preset
@@ -133,15 +123,36 @@ After `\titlestyle`, you can further adjust placement:
 \titleshapeoffset{10mm}{-20mm}   % X/Y offset from page center
 ```
 
-### Other overrides
+### Colors and logo
 
 ```latex
-\accentcolor{Rot1}         % change the accent band color (plain style)
+\accentcolor{Rot1}         % accent band color (plain style)
 \logovariant{de}           % switch to German logo (default: en)
 \logocolor{weiss}          % force white logo (default: auto-detected from bg color)
 \titlebgcolor{Gruen1}      % change background color after \titlestyle
 \titleshapecolor{Violett1} % change shape color after \titlestyle
 \titletextcolor{black}     % override text color after \titlestyle
+```
+
+### Fonts
+
+Each element is controlled via KOMA's `\setkomafont` / `\addtokomafont`. Four elements reuse standard KOMA names; two (`tudorgunit`, `tudmeta`) are specific to this template:
+
+| Element | Key | Default |
+|---|---|---|
+| Faculty / institute / chair | `tudorgunit` | `\footnotesize` |
+| Thesis title | `title` | `26pt bold, accent color` |
+| Subtitle | `subtitle` | `17pt` |
+| Thesis type + degree | `subject` | `\large` |
+| Author name | `author` | `\large\bfseries` |
+| Email, matrnr, supervisors, date | `tudmeta` | `\small` |
+
+Colors default to the active `\titlestyle` and update automatically. Examples:
+
+```latex
+\setkomafont{title}{\fontsize{28pt}{33pt}\selectfont\bfseries\color{Rot1}}
+\addtokomafont{tudmeta}{\itshape}
+\setkomafont{author}{\Large\bfseries\color{white}}
 ```
 
 ## Heading color

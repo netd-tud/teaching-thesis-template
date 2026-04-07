@@ -105,6 +105,34 @@
 }
 
 %% ============================================================
+%% Title page font elements
+%% Customize with \setkomafont{element}{instructions} or
+%% \addtokomafont{element}{instructions}.
+%% All defaults inherit \sffamily from the enclosing node.
+%% Color macros (\tud@titlefgcolor, \tud@titleaccentcolor) resolve
+%% at render time and reflect the active \titlestyle automatically.
+%%
+%% Four elements reuse standard KOMA names:
+%%   title     — main thesis title
+%%   subtitle  — subtitle
+%%   author    — author name on title page
+%%   subject   — thesis type and degree
+%%
+%% Two new elements cover parts with no KOMA equivalent:
+%%   tudorgunit — faculty / institute / chair line
+%%   tudmeta    — lower metadata (email, matrnr, supervisors, date)
+%%
+%% KOMA's built-in defaults for title/subtitle/author/subject differ from
+%% our layout, so we reset them here.
+%% ============================================================
+\setkomafont{title}{\fontsize{26pt}{30pt}\selectfont\bfseries\color{\tud@titleaccentcolor}}
+\setkomafont{subtitle}{\fontsize{17pt}{21pt}\selectfont\color{\tud@titlefgcolor}}
+\setkomafont{author}{\large\bfseries\color{\tud@titlefgcolor}}
+\setkomafont{subject}{\large\color{\tud@titlefgcolor}}
+\newkomafont{tudorgunit}{\footnotesize\color{\tud@titlefgcolor}}
+\newkomafont{tudmeta}{\small\color{\tud@titlefgcolor}}
+
+%% ============================================================
 %% User-facing metadata commands
 %% ============================================================
 \newcommand{\faculty}[1]{\def\tud@faculty{#1}}
@@ -303,22 +331,22 @@
           \raggedright\sffamily\color{\tud@titlefgcolor}%
           % Organizational hierarchy (stacked: faculty / institute / chair)
           \ifx\tud@faculty\@empty\else
-            {\footnotesize%
+            {\usekomafont{tudorgunit}%
               \tud@faculty%
               \ifx\tud@institute\@empty\else\\\tud@institute\fi
               \ifx\tud@chair\@empty\else\\\tud@chair\fi
             \par\vspace{6mm}}%
           \fi
           % Title
-          {\fontsize{26pt}{30pt}\selectfont\bfseries\color{\tud@titleaccentcolor}\@title\par}%
+          {\usekomafont{title}\@title\par}%
           % Subtitle (stored by KOMA's \subtitle command into \@subtitle)
           \ifx\@subtitle\@empty\else
             \vspace{3mm}%
-            {\fontsize{17pt}{21pt}\selectfont\@subtitle\par}%
+            {\usekomafont{subtitle}\@subtitle\par}%
           \fi
           \vspace{5mm}%
           % Thesis type + degree abbreviation
-          {\large%
+          {\usekomafont{subject}%
             \tud@thesislabel%
             \ifx\tud@graduationshort\@empty\else\space(\tud@graduationshort)\fi
           \par}%
@@ -332,21 +360,21 @@
           \setlength{\parindent}{0pt}%
           \raggedright\sffamily\color{\tud@titlefgcolor}%
           % Author name
-          {\large\bfseries\@author\par}%
+          {\usekomafont{author}\@author\par}%
           \ifx\tud@email\@empty\else
-            {\small\tud@email\par}%
+            {\usekomafont{tudmeta}\tud@email\par}%
           \fi
           \ifx\tud@matriculationnumber\@empty\else
-            {\small\tud@lbl@matrnr: \tud@matriculationnumber\par}%
+            {\usekomafont{tudmeta}\tud@lbl@matrnr: \tud@matriculationnumber\par}%
           \fi
           \ifx\tud@dateofbirth\@empty\else
-            {\small\tud@lbl@born\ \tud@dateofbirth%
+            {\usekomafont{tudmeta}\tud@lbl@born\ \tud@dateofbirth%
               \ifx\tud@placeofbirth\@empty\else,\space\tud@placeofbirth\fi
             \par}%
           \fi
           \vspace{4mm}%
           % Supervisors and reviewers — two-column tabular so names left-align
-          {\small
+          {\usekomafont{tudmeta}%
           \begin{tabular}[t]{@{}l@{\hspace{0.4em}}l@{}}
             \ifx\tud@professor\@empty\else
               \tud@lbl@reviewer: & \tud@professor \\
@@ -364,7 +392,7 @@
           \par}%
           \vspace{4mm}%
           % Submission date
-          {\small\tud@lbl@submitted: \@date}%
+          {\usekomafont{tudmeta}\tud@lbl@submitted: \@date}%
         };
     \end{tikzpicture}%
     \null\vfill  % ensure the titlepage spans a full page
