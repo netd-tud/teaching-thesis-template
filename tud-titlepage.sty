@@ -3,8 +3,8 @@
 %%
 %% Provides:
 %%   - Metadata commands: \faculty, \institute, \chair, \thesis, \graduation,
-%%     \supervisor, \cosupervisor, \professor, \reviewer, \matriculationnumber,
-%%     \dateofbirth, \placeofbirth, \email
+%%     \supervisor (supports \and for multiple names), \professor, \reviewer,
+%%     \matriculationnumber, \dateofbirth, \placeofbirth, \email
 %%   - Three title styles via \titlestyle{...}:
 %%       plain      — white background (no shapes)
 %%       unicolor   — full-page solid color background
@@ -64,7 +64,6 @@
 \def\tud@supervisor{}
 \def\tud@professor{}
 % \subtitle is provided by KOMA-Script (scrreprt); it stores into \@subtitle
-\def\tud@cosupervisor{}
 \def\tud@email{}
 \def\tud@reviewer{}
 \def\tud@logovariant{\iflanguage{ngerman}{de}{en}}
@@ -141,7 +140,6 @@
 \newcommand{\supervisor}[1]{\def\tud@supervisor{#1}}
 \newcommand{\professor}[1]{\def\tud@professor{#1}}
 % \subtitle is provided by KOMA-Script; no redefinition needed here
-\newcommand{\cosupervisor}[1]{\def\tud@cosupervisor{#1}}
 \newcommand{\email}[1]{\def\tud@email{#1}}
 \newcommand{\reviewer}[1]{\def\tud@reviewer{#1}}
 \newcommand{\logovariant}[1]{\def\tud@logovariant{#1}}
@@ -247,7 +245,6 @@
 
 %% Bilingual labels
 \newcommand{\tud@lbl@supervisor}{\iflanguage{ngerman}{Betreuer}{Supervisor}}
-\newcommand{\tud@lbl@cosupervisor}{\iflanguage{ngerman}{Zweiter Betreuer}{Co-Supervisor}}
 \newcommand{\tud@lbl@reviewer}{\iflanguage{ngerman}{Gutachter}{Reviewer}}
 \newcommand{\tud@lbl@secondreviewer}{\iflanguage{ngerman}{Zweiter Gutachter}{Second Reviewer}}
 \newcommand{\tud@lbl@submitted}{\iflanguage{ngerman}{Eingereicht am}{Date of Submission}}
@@ -352,8 +349,9 @@
             \par}%
           \fi
           \vspace{4mm}%
-          % Supervisors and reviewers — two-column tabular so names left-align
-          {\usekomafont{tudmeta}%
+          % Supervisors and reviewers — two-column tabular so names left-align.
+          % \and in \supervisor{A \and B} expands to \\ & , giving one row per name.
+          {\usekomafont{tudmeta}\def\and{\\ & }%
           \begin{tabular}[t]{@{}l@{\hspace{0.4em}}l@{}}
             \ifx\tud@professor\@empty\else
               \tud@lbl@reviewer: & \tud@professor \\
@@ -363,9 +361,6 @@
             \fi
             \ifx\tud@supervisor\@empty\else
               \tud@lbl@supervisor: & \tud@supervisor \\
-            \fi
-            \ifx\tud@cosupervisor\@empty\else
-              \tud@lbl@cosupervisor: & \tud@cosupervisor \\
             \fi
           \end{tabular}%
           \par}%

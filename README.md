@@ -67,10 +67,9 @@ Set in `thesis.tex` before `\maketitle`:
 \placeofbirth{Dresden}
 \email{max.mustermann@mailbox.tu-dresden.de}
 
-\supervisor{Dipl.-Inf. Max Mustermann}
+\supervisor{Dipl.-Inf. Max Mustermann \and Dr. Co-Supervisor}
 \professor{Prof. Dr. rer. nat. Matthias Wählisch}
 \reviewer{Prof. Dr. Second Reviewer}
-\cosupervisor{Dr. Co-Supervisor}
 \date{1.1.1970}
 ```
 
