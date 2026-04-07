@@ -1,5 +1,14 @@
 %% tud-thesis.sty
-%% General TUD thesis styling: heading font/color and statutory declaration.
+%% General TUD thesis styling: colored headings and statutory declaration page.
+%%
+%% Provides:
+%%   - Colored, sans-serif chapter/section headings via KOMA's \setkomafont.
+%%     Default color is Brilliantblau; override after \usepackage{tud-thesis}:
+%%       \renewcommand{\headingcolor}{black}
+%%   - \confirmation — typesets a bilingual (DE/EN) statutory declaration page,
+%%     using \@author and \@date from the document preamble.
+%%
+%% Requires: KOMA-Script class (scrbook/scrreprt/scrartcl), tud-colors, babel.
 
 \NeedsTeXFormat{LaTeX2e}
 \ProvidesPackage{tud-thesis}[2026/04/01 TUD Thesis Styling]
