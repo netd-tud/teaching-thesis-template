@@ -4,9 +4,9 @@
 %% Provides:
 %%   - Metadata commands: \faculty, \institute, \chair, \thesis, \graduation,
 %%     \supervisor (supports \and for multiple names), \professor, \reviewer,
-%%     \matriculationnumber, \dateofbirth, \placeofbirth, \email
+%%     \matriculationnumber, \email
 %%   - Three title styles via \titlestyle{...}:
-%%       plain      — white background (no shapes)
+%%       legacy     — white background, no shapes (former default)
 %%       unicolor   — full-page solid color background
 %%       shapes     — full-page background with the TUD CD logo-mark shape overlay
 %%   - Shape placement control: \titleshapevariant (presets 1–5),
@@ -47,6 +47,15 @@
 % = 210mm - 15mm - 10mm = 185mm
 \newlength{\tud@textwidth}
 \setlength{\tud@textwidth}{\dimexpr\paperwidth-\tud@marginleft-\tud@marginright}
+\newlength{\tud@metacol}  % equal-width metadata column (half text width minus half gap)
+\setlength{\tud@metacol}{\dimexpr0.5\tud@textwidth-0.5em\relax}
+\newcount\tud@supcount   % counts \and calls in \supervisor for column/row placement
+% Separator tokens used by \and inside supervisor tabular row.
+% Defined at package level so catcode 4 is guaranteed for &.
+% \csname tud@sup@sep@odd\endcsname → & (cell separator)
+% \csname tud@sup@sep@even\endcsname → \tabularnewline (row break, no extra skip)
+\@namedef{tud@sup@sep@odd}{&}
+\@namedef{tud@sup@sep@even}{\tabularnewline}
 
 %% ============================================================
 %% Internal metadata storage (use \def for reliable \ifx tests)
@@ -59,8 +68,6 @@
 \def\tud@graduationshort{}
 \def\tud@graduationlong{}
 \def\tud@matriculationnumber{}
-\def\tud@dateofbirth{}
-\def\tud@placeofbirth{}
 \def\tud@supervisor{}
 \def\tud@professor{}
 % \subtitle is provided by KOMA-Script (scrreprt); it stores into \@subtitle
@@ -68,24 +75,60 @@
 \def\tud@reviewer{}
 \def\tud@logovariant{\iflanguage{ngerman}{de}{en}}
 \def\tud@logocolor{blau}    % auto-set from bgcolor; override with \logocolor
-%% Title style (set by \titlestyle; defaults = shapes style, variant 5)
+%% Title style (set by \titlestyle; defaults = shapes[1][tonal])
+%% Dunkelblau background, Brilliantblau shapes, variant 1, white text/logo
 \def\tud@titlestyle{shapes}
 \def\tud@titlebg{1}
 \def\tud@titleshapes{1}
-\def\tud@bgcolor{white}
+\def\tud@bgcolor{Dunkelblau}
 \def\tud@shapecolor{Brilliantblau}
-\def\tud@titlefgcolor{black}
-\def\tud@titleaccentcolor{Brilliantblau}
-\def\tud@shaperotation{0}
-\def\tud@shapescale{2.75}     % variant 5
-\def\tud@shapexoffset{12.5cm} % variant 5
-\def\tud@shapeyoffset{-12.5cm} % variant 5
+\def\tud@titlefgcolor{white}          % lower block (plain bg) text color
+\def\tud@titleupperfgcolor{white}    % upper block (on shape) text color
+\def\tud@titleaccentcolor{white}
+\def\tud@logocolor{weiss}
+\def\tud@shaperotation{90}          % variant 1: rotation step 2 × 45°
+\def\tud@shapescale{4}              % variant 1
+\def\tud@shapexoffset{-15cm}        % variant 1
+\def\tud@shapeyoffset{40cm}         % variant 1
+\def\tud@metalabelcolor{Brilliantblau} % = shape color in shapes style (tonal default)
 
-%% Auto-detect logo color + text color from \tud@bgcolor.
-%% Any dark TUD color → weiss logo + white text; otherwise blau logo + black text.
+%% For unicolor/legacy: set metalabelcolor from logo color (background-based).
+\newcommand{\tud@setmetalabelcolor}{%
+  \def\tud@ts@weiss{weiss}%
+  \ifx\tud@logocolor\tud@ts@weiss
+    \def\tud@metalabelcolor{Blau2}%
+  \else
+    \def\tud@metalabelcolor{Brilliantblau}%
+  \fi
+}
+%% For shapes style: set upper-block text color and metalabelcolor from shape.
+%% Light shapes (Color2, Gelb, light grays, white) → Dunkelblau upper text.
+%% Dark shapes → white upper text.
+%% metalabelcolor mirrors the shape color for visual cohesion with the shapes.
+\newcommand{\tud@autoshapecolor}{%
+  \def\tud@titleupperfgcolor{white}%
+  \@for\tud@iter:={Blau2,Violett2,Magenta2,Rot2,Orange2,Gelb1,Gelb2,%
+                   Oliv2,Gruen2,Tuerkis2,Grau40,Grau20,Grau10,white}\do{%
+    \ifx\tud@shapecolor\tud@iter
+      \def\tud@titleupperfgcolor{Brilliantblau}%
+    \fi
+  }%
+  \edef\tud@metalabelcolor{\tud@shapecolor}%
+  \edef\tud@titleaccentcolor{\tud@titleupperfgcolor}%
+  % Logo sits in the upper block (on the shape) → match upper fg color.
+  \def\tud@ts@white{white}%
+  \ifx\tud@titleupperfgcolor\tud@ts@white
+    \def\tud@logocolor{weiss}%
+  \else
+    \def\tud@logocolor{blau}%
+  \fi
+}
+
+%% Auto-detect logo color + lower-block text color from \tud@bgcolor.
+%% Any dark TUD color → weiss logo + white text; otherwise blau logo + Dunkelblau text.
 \newcommand{\tud@autologocolor}{%
   \def\tud@logocolor{blau}%
-  \def\tud@titlefgcolor{black}%
+  \def\tud@titlefgcolor{Brilliantblau}%
   \def\tud@titleaccentcolor{Brilliantblau}%
   \@for\tud@iter:={Brilliantblau,Dunkelblau,Blau1,Violett1,Magenta1,%
                    Rot1,Orange1,Oliv1,Gruen1,Tuerkis1,Grau100,Grau80,Grau60}\do{%
@@ -118,12 +161,17 @@
 %% KOMA's built-in defaults for title/subtitle/author/subject differ from
 %% our layout, so we reset them here.
 %% ============================================================
+%% title/subtitle/author/tudorgunit are in the upper block (on the shape) →
+%%   use \tud@titleupperfgcolor (shape-based).
+%% subject/tudmeta are in the lower block (plain background) →
+%%   use \tud@titlefgcolor (background-based).
+%% All color macros resolve at render time via \usekomafont / \color{...}.
 \setkomafont{title}{\fontsize{26pt}{30pt}\selectfont\bfseries\color{\tud@titleaccentcolor}}
-\setkomafont{subtitle}{\fontsize{17pt}{21pt}\selectfont\color{\tud@titlefgcolor}}
-\setkomafont{author}{\large\bfseries\color{white}}
+\setkomafont{subtitle}{\fontsize{17pt}{21pt}\selectfont\color{\tud@titleupperfgcolor}}
+\setkomafont{author}{\large\bfseries\color{\tud@titleupperfgcolor}}
 \setkomafont{subject}{\large\color{\tud@titlefgcolor}}
-\newkomafont{tudorgunit}{\footnotesize\color{\tud@titlefgcolor}}
-\newkomafont{tudmeta}{\small\color{white}}
+\newkomafont{tudorgunit}{\footnotesize\color{\tud@titleupperfgcolor}}
+\newkomafont{tudmeta}{\small\color{\tud@titlefgcolor}}
 
 %% ============================================================
 %% User-facing metadata commands
@@ -135,8 +183,6 @@
 \newcommand{\thesis}[1]{\def\tud@thesistype{#1}}
 \newcommand{\graduation}[2][]{\def\tud@graduationshort{#1}\def\tud@graduationlong{#2}}
 \newcommand{\matriculationnumber}[1]{\def\tud@matriculationnumber{#1}}
-\newcommand{\dateofbirth}[1]{\def\tud@dateofbirth{#1}}
-\newcommand{\placeofbirth}[1]{\def\tud@placeofbirth{#1}}
 \newcommand{\supervisor}[1]{\def\tud@supervisor{#1}}
 \newcommand{\professor}[1]{\def\tud@professor{#1}}
 % \subtitle is provided by KOMA-Script; no redefinition needed here
@@ -168,6 +214,7 @@
   %--- dispatch on mandatory style name ---%
   \def\tud@ts@uc{unicolor}%
   \def\tud@ts@sh{shapes}%
+  \def\tud@ts@lg{legacy}%
   %
   \ifx\tud@titlestyle\tud@ts@uc
     %--- unicolor: #1=textcolor (opt), #2=bgcolor (opt) ---%
@@ -177,6 +224,9 @@
       {\def\tud@bgcolor{#2}}%
     \tud@autologocolor
     \IfNoValueF{#1}{\def\tud@titlefgcolor{#1}}%
+    \tud@setmetalabelcolor
+    % unicolor has no shape; sync upper fg with lower fg
+    \edef\tud@titleupperfgcolor{\tud@titlefgcolor}%
   \fi
   %
   \ifx\tud@titlestyle\tud@ts@sh
@@ -191,20 +241,35 @@
         \def\tud@bgcolor{Dunkelblau}\def\tud@shapecolor{Brilliantblau}%
       \fi
       \tud@autologocolor
+      \tud@autoshapecolor
       \IfNoValueTF{#1}{\titleshapevariant{5}}{\titleshapevariant{#1}}%
     }{%
-      %--- 4-optional path: #1=variant, #2=textcolor, #3=shapecolor, #4=bgcolor ---%
+      %--- 4-optional path: #1=variant, #2=lower-textcolor, #3=shapecolor, #4=bgcolor ---%
+      % Upper text color is always auto-detected from shape via \tud@autoshapecolor.
+      % #2 overrides only the lower-block text color (\tud@titlefgcolor).
       \def\tud@bgcolor{Dunkelblau}\def\tud@shapecolor{Brilliantblau}%
       \tud@autologocolor
       \IfNoValueF{#4}{\def\tud@bgcolor{#4}\tud@autologocolor}%
       \IfNoValueF{#3}{\def\tud@shapecolor{#3}}%
       \IfNoValueF{#2}{\def\tud@titlefgcolor{#2}}%
+      \tud@autoshapecolor
       \IfNoValueTF{#1}{\titleshapevariant{5}}{\titleshapevariant{#1}}%
     }%
   \fi
+  \ifx\tud@titlestyle\tud@ts@lg
+    \def\tud@titlebg{0}%
+    \def\tud@titleshapes{0}%
+    \def\tud@bgcolor{white}%
+    \def\tud@shapecolor{Brilliantblau}%
+    \def\tud@titlefgcolor{black}%
+    \def\tud@titleupperfgcolor{black}%
+    \def\tud@titleaccentcolor{Brilliantblau}%
+    \def\tud@logocolor{blau}%
+    \def\tud@metalabelcolor{Brilliantblau}%
+  \fi
 }
 \newcommand{\titlebgcolor}[1]{\def\tud@bgcolor{#1}\tud@autologocolor}
-\newcommand{\titleshapecolor}[1]{\def\tud@shapecolor{#1}}
+\newcommand{\titleshapecolor}[1]{\def\tud@shapecolor{#1}\tud@autoshapecolor}
 \newcommand{\titletextcolor}[1]{\def\tud@titlefgcolor{#1}}
 % #1 = rotation step 0–7; stored angle = #1 × 45°.
 % For an arbitrary angle bypass: \def\tud@shaperotation{DEG}
@@ -249,7 +314,7 @@
 \newcommand{\tud@lbl@secondreviewer}{\iflanguage{ngerman}{Zweiter Gutachter}{Second Reviewer}}
 \newcommand{\tud@lbl@submitted}{\iflanguage{ngerman}{Eingereicht am}{Date of Submission}}
 \newcommand{\tud@lbl@matrnr}{\iflanguage{ngerman}{Matrikelnummer}{Matriculation Number}}
-\newcommand{\tud@lbl@born}{\iflanguage{ngerman}{geboren am}{born}}
+\newcommand{\tud@lbl@supervisors}{\iflanguage{ngerman}{Betreuer}{Supervisors}}
 
 %% ============================================================
 %% \maketitle — TUD CD title page
@@ -295,16 +360,17 @@
       \node[anchor=north west, inner sep=0pt, outer sep=0pt]
         at ([xshift=\tud@marginleft, yshift=-\tud@margintop]current page.north west)
         {\includegraphics[height=\tud@logoheight]{figures/tud-logo-\tud@logocolor-\tud@logovariant}};
-      %--- Title / thesis-type content block ---%
-      %    Starts below the logo protection zone (2 × logo height = 38mm from top)
-      %    plus top margin (15mm) → 53mm from top, plus a small visual gap
+      %--- Title / author content block ---%
+      %    Starts below the logo
       \node[anchor=north west, inner sep=0pt, outer sep=0pt,
             text width=\tud@textwidth, align=left]
-        at ([xshift=\tud@marginleft, yshift=-57mm]current page.north west)
+        at ([xshift=\tud@marginleft,
+             yshift=\the\dimexpr-\tud@margintop-\tud@logoheight-\tud@margintop\relax]%
+            current page.north west)
         {%
           \setlength{\parskip}{0pt}%
           \setlength{\parindent}{0pt}%
-          \raggedright\sffamily\color{\tud@titlefgcolor}%
+          \raggedright\sffamily\color{\tud@titleupperfgcolor}%
           % Organizational hierarchy (stacked: faculty / institute / chair)
           \ifx\tud@faculty\@empty\else
             {\usekomafont{tudorgunit}%
@@ -321,11 +387,11 @@
             {\usekomafont{subtitle}\@subtitle\par}%
           \fi
           \vspace{5mm}%
-          % Thesis type + degree abbreviation
-          {\usekomafont{subject}%
-            \tud@thesislabel%
-            \ifx\tud@graduationshort\@empty\else\space(\tud@graduationshort)\fi
-          \par}%
+          % Author name + email (upper block — use upper fg color)
+          {\usekomafont{author}\@author\par}%
+          \ifx\tud@email\@empty\else
+            {\usekomafont{tudmeta}\color{\tud@titleupperfgcolor}\tud@email\par}%
+          \fi
         };
       %--- Metadata block: anchored to bottom-left ---%
       \node[anchor=south west, inner sep=0pt, outer sep=0pt,
@@ -335,38 +401,79 @@
           \setlength{\parskip}{1.5pt}%
           \setlength{\parindent}{0pt}%
           \raggedright\sffamily\color{\tud@titlefgcolor}%
-          % Author name
-          {\usekomafont{author}\@author\par}%
-          \ifx\tud@email\@empty\else
-            {\usekomafont{tudmeta}\tud@email\par}%
+          % Thesis type + degree abbreviation
+          {\usekomafont{subject}%
+            \tud@thesislabel%
+            \ifx\tud@graduationshort\@empty\else\space(\tud@graduationshort)\fi
+          \par}%
+          % Meta: label above value, two-column layout.
+          % l columns (not p{}) so that \and → & is recognized by \halign.
+          % Each section: label row, then value row(s).
+          % \and counter: odd calls → & (right col); even → \\[skip] (new row left).
+          %
+          % Pre-scan to detect multiple supervisors for plural label
+          \global\let\tud@ismultisuper\@empty
+          \ifx\tud@supervisor\@empty\else
+            \setbox\z@=\hbox{%
+              \def\and{\global\def\tud@ismultisuper{x}}%
+              \tud@supervisor
+            }%
           \fi
-          \ifx\tud@matriculationnumber\@empty\else
-            {\usekomafont{tudmeta}\tud@lbl@matrnr: \tud@matriculationnumber\par}%
-          \fi
-          \ifx\tud@dateofbirth\@empty\else
-            {\usekomafont{tudmeta}\tud@lbl@born\ \tud@dateofbirth%
-              \ifx\tud@placeofbirth\@empty\else,\space\tud@placeofbirth\fi
-            \par}%
-          \fi
-          \vspace{4mm}%
-          % Supervisors and reviewers — two-column tabular so names left-align.
-          % \and in \supervisor{A \and B} expands to \\ & , giving one row per name.
-          {\usekomafont{tudmeta}\def\and{\\ & }%
-          \begin{tabular}[t]{@{}l@{\hspace{0.4em}}l@{}}
+          {\usekomafont{tudmeta}%
+          \global\tud@supcount=0
+          % \and uses \csname to resolve \ifodd entirely inside the csname expansion,
+          % preventing & from leaking \else..\fi tokens into the next tabular cell.
+          \def\and{%
+            \global\advance\tud@supcount by 1
+            \csname tud@sup@sep@\ifodd\tud@supcount odd\else even\fi\endcsname
+          }%
+          \begin{tabular}[t]{@{}p{\tud@metacol}@{\hspace{1em}}p{\tud@metacol}@{}}
+            % Reviewer section: label row then value row
             \ifx\tud@professor\@empty\else
-              \tud@lbl@reviewer: & \tud@professor \\
+              \textcolor{\tud@metalabelcolor}{\tud@lbl@reviewer}%
             \fi
+            &
             \ifx\tud@reviewer\@empty\else
-              \tud@lbl@secondreviewer: & \tud@reviewer \\
+              \textcolor{\tud@metalabelcolor}{\tud@lbl@secondreviewer}%
             \fi
+            \\
+            \ifx\tud@professor\@empty\else
+              \tud@professor
+            \fi
+            &
+            \ifx\tud@reviewer\@empty\else
+              \tud@reviewer
+            \fi
+            \\[\smallskipamount]
+            % Supervisor section: full-width label, then value row(s)
             \ifx\tud@supervisor\@empty\else
-              \tud@lbl@supervisor: & \tud@supervisor \\
+              \multicolumn{2}{@{}l@{}}{%
+                \textcolor{\tud@metalabelcolor}{%
+                  \ifx\tud@ismultisuper\@empty
+                    \tud@lbl@supervisor
+                  \else
+                    \tud@lbl@supervisors
+                  \fi
+                }%
+              }%
+              \\
+              \tud@supervisor
+              \\[\smallskipamount]
             \fi
+            % Matrnr | Date: label row then value row
+            \ifx\tud@matriculationnumber\@empty\else
+              \textcolor{\tud@metalabelcolor}{\tud@lbl@matrnr}%
+            \fi
+            &
+            \textcolor{\tud@metalabelcolor}{\tud@lbl@submitted}%
+            \\
+            \ifx\tud@matriculationnumber\@empty\else
+              \tud@matriculationnumber
+            \fi
+            &
+            \@date
           \end{tabular}%
           \par}%
-          \vspace{4mm}%
-          % Submission date
-          {\usekomafont{tudmeta}\tud@lbl@submitted: \@date}%
         };
     \end{tikzpicture}%
     \null\vfill  % ensure the titlepage spans a full page
