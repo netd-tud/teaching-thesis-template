@@ -7,9 +7,12 @@
 
 This an example text, which shows you, how to use the \texttt{tudscr}\footnote{TUD-Script. \url{https://github.com/tud-cd/tudscr} (Visited on Sept. 15 2020)} template and its components. Feel free to remove this example text or use the provided segments for your thesis.
 
+\blindtext
+
 \section{Research Questions, Inline TODOs, Citations and Referencing}
 
 We'd like to answer the following research goals.\todo[inline]{You may of course write some more text than given in this example.}
+\blindtext
 
 \begin{research-question}
   \item Do we live in the Matrix?
@@ -17,10 +20,13 @@ We'd like to answer the following research goals.\todo[inline]{You may of course
 \end{research-question}
 
 \noindent Feel free to explain the motivation behind your research questions.
+\blindtext
 
 \section{Including Graphics and Paragraphs}
 
 Although this has really nothing to do with the previous sections, take the following as an example of how to include graphics.
+
+\blindtext
 
 \begin{figure}[H]
 \includegraphics[width=\linewidth, bb=0 0 1626 1038]{example.pdf}
@@ -29,6 +35,8 @@ Although this has really nothing to do with the previous sections, take the foll
 
 \noindent As shown in \Cref{fig:example-single}, including graphics is really easy with PDF files, but you need to give it a \textit{bounding box}, which is simply \texttt{0 0 <width> <height>}. Here is how to include PNG files.
 
+\blindtext
+
 \begin{figure}[H]
 \includegraphics[width=0.75\linewidth]{example.png}
 \caption{The same diagram but in PNG and smaller.}\label{fig:example-small}
@@ -36,7 +44,11 @@ Although this has really nothing to do with the previous sections, take the foll
 
 \noindent With PNG, no bounding box must be given, but the size of your thesis PDF will probably increase by some order of magnitudes. So try to use PDF whenever possible. Also, avoid JPEG because of the lossy compression. We want our thesis to look nice, or wont we? Try to fiddle around with the option \texttt{H} after the figure, if it doesn't fit the page. This will not be explained here, read the documentation.
 
+\blindtext
+
 \paragraph{One last example:} use the following snippet to include multiple graphics in a table-like structure.
+
+\blindtext
 
 \begin{figure}[H]
 \begin{tabular}{ll}
@@ -55,14 +67,14 @@ Although this has really nothing to do with the previous sections, take the foll
 
 What about some nice XML? Btw, always \enquote{quote} with the according tag.
 
-\begin{lstlisting}[language=XML]
+\begin{minted}{xml}
 <note>
   <from>Philipp</from>
   <to>Reader</to>
   <heading>Contact me</heading>
   <email>mail@philippmatth.es</email>
 </note>
-\end{lstlisting}
+\end{minted}
 
 \noindent Check out this table! Btw, this may seem a bit confusing, but there is \texttt{tabular}, \texttt{tabularx} or for example also \texttt{longtable}, which is for tables across multiple pages.
 
