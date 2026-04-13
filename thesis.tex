@@ -1,162 +1,16 @@
 \documentclass[
-  ngerman, % change to ngerman for german theses
-  twoside=semi, % use twoside for booklike layouts
-  numbers=noenddot % remove trailing dots in chapter/section/... enumeration
+  english, % change to ngerman for german theses
+  twoside, % use twoside for booklike layouts
+  numbers=noenddot, % remove trailing dots in chapter/section/... enumeration
+  parskip=half*
 ]{scrbook}
 
-\usepackage{noto}
+\input{preamble}
 
-\usepackage[
-  ngerman % change to ngerman for german theses
-]{babel}
-\usepackage{isodate}
-\usepackage{pdfpages}
-\usepackage{listings}
-\usepackage{hyphenat}
-
-\usepackage[
-  style=alphabetic,
-  backend=biber,
-  url=false,
-  doi=false,
-  isbn=false,
-  hyperref,
-]{biblatex}
 % configure the location of the biblatex file
 \addbibresource{bibliography.bib}
 \AtEveryBibitem{%
   \clearfield{note}%
-}
-
-% make all links clickable but hide ugly boxes
-\usepackage[hidelinks]{hyperref}
-\usepackage{amsmath} % must precede cleveref (tcolorbox also loads it internally)
-% automatically insert Fig. X in the text with \cref{..}
-\usepackage[capitalise,nameinlink,noabbrev]{cleveref}
-
-\usepackage[colorinlistoftodos,prependcaption,textsize=tiny]{todonotes}
-
-\usepackage{graphicx}
-\graphicspath{ {./figures/} }
-
-\usepackage{svg}
-
-% if you need mathy stuff
-\newtheorem{lem}{Lemma}
-\crefname{lem}{Lemma}{Lemmas}
-\newtheorem{thm}{Theorem}
-\crefname{thm}{Theorem}{Theorems}
-\newtheorem{defs}{Definition}
-\crefname{defs}{Def.}{Defs.}
-
-\usepackage{blindtext}
-
-\usepackage{csquotes}
-
-\usepackage{caption}
-\captionsetup{font=normalfont,labelfont=normalfont,labelsep=space}
-\usepackage{floatrow}
-\floatsetup{font=normalfont}
-\floatsetup[table]{style=plaintop}
-\captionsetup{singlelinecheck=off,format=hang,justification=raggedright}
-\DeclareCaptionSubType[alph]{figure}
-\DeclareCaptionSubType[alph]{table}
-\captionsetup[subfloat]{labelformat=brace,list=off}
-
-\usepackage{booktabs}
-\usepackage{array}
-\usepackage{tabularx}
-\usepackage{tabulary}
-\usepackage{tabu}
-\usepackage{longtable}
-\usepackage{multirow}
-
-\usepackage{quoting}
-
-\usepackage[babel]{microtype}
-
-\usepackage{xfrac}
-
-\usepackage{enumitem}
-\setlist[itemize]{noitemsep}
-
-\usepackage{ellipsis}
-\let\ellipsispunctuation\relax
-
-\usepackage{tcolorbox}
-\tcbuselibrary{many}
-\usetikzlibrary{calc}
-\usepackage{fontawesome5}
-
-\input{lst} % code styles (listings)
-
-
-% use this custom environment for equations
-\newenvironment{conditions}
-  {\par\vspace{\abovedisplayskip}\noindent\begin{tabular}{>{$}l<{$} @{${}={}$} l}}
-  {\end{tabular}\par\vspace{\belowdisplayskip}}
-
-\usepackage{float}
-
-% Page layout — standard German thesis margins (overrides KOMA typearea)
-\usepackage[
-  a4paper,
-  inner=1.5cm,
-  outer=1cm,
-  top=1.5cm,
-  bottom=23.767mm,
-  twoside=false, % twoside=semi means symmetric text area; suppress geometry mirroring
-]{geometry}
-
-\usepackage{tud-colors}    % TUD CD color palette
-\usepackage{tud-titlepage} % title page + metadata commands (\faculty, \thesis, ...)
-\usepackage{tud-thesis}    % heading styling + \confirmation
-% For black headings add: \renewcommand{\headingcolor}{black}
-
-% Research question box
-% Change \researchquestioncolor (border + title tab) and \researchquestionbgcolor (fill)
-% to any xcolor name or expression, e.g. \renewcommand{\researchquestioncolor}{Rot1}
-\newcommand{\researchquestiontitle}{Research Questions}
-\newcommand{\researchquestioncolor}{Brilliantblau}
-\newcommand{\researchquestionbgcolor}{Blau2!30!white}
-\newenvironment{research-question}{%
-  \renewcommand{\labelitemi}{\color{\researchquestioncolor}\faIcon{caret-right}}%
-  \begin{itemize}[leftmargin=0.5em, labelwidth=0.5em, rightmargin=0.0em,
-                  itemsep=0pt, labelsep=0.3em]%
-}{\end{itemize}}
-\tcolorboxenvironment{research-question}{
-  title={\researchquestiontitle},
-  left=0.5em,
-  right=0.5em,
-  fonttitle=\sffamily\bfseries,
-  width=\linewidth-3pt,
-  enhanced,
-  attach boxed title to top left,
-  coltitle=white,
-  colback=\researchquestionbgcolor,
-  arc=2pt,
-  boxed title style={empty, arc=0pt, outer arc=0pt, boxrule=0pt},
-  frame style={empty, arc=0pt, outer arc=0pt, boxrule=0pt},
-  underlay boxed title={
-    \draw[fill=\researchquestioncolor, draw=\researchquestioncolor, line width=2pt]
-      ([yshift=-2pt]title.north west)
-      arc[radius=2pt, start angle=180, end angle=90]
-      -- (title.north east)
-      arc[radius=3pt, start angle=90, end angle=45]
-      -- ($(title.north east) + (\tcboxedtitleheight,-\tcboxedtitleheight)$)
-      -- (title.south west) -- cycle;
-  },
-  frame code={
-    \draw[fill=\researchquestionbgcolor, draw=\researchquestioncolor, line width=2pt]
-      (frame.north west)
-      -- ([yshift=2pt]frame.south west)
-      arc[radius=2pt, start angle=180, end angle=270]
-      -- ([xshift=-2pt]frame.south east)
-      arc[radius=2pt, start angle=-90, end angle=0]
-      -- ([yshift=-2pt]frame.north east)
-      arc[radius=2pt, start angle=0, end angle=90]
-      -- cycle;
-  }
 }
 
 \begin{document}
@@ -189,6 +43,8 @@
 
   % \includepdf[pages=-]{task/task.pdf}  % optional: task definition
 
+  \raggedbottom
+
   \confirmation
   \input{sections/abstract}
 
@@ -203,6 +59,10 @@
 
   % this is where your thesis lives
   \input{sections/introduction}
+
+  \Blinddocument
+
+  \blinddocument
 
   \backmatter % arabic continues, chapter numbers suppressed
 
