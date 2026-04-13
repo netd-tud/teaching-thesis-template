@@ -32,6 +32,24 @@
 %% ============================================================
 %% \confirmation — statutory declaration page
 %% ============================================================
+%% ============================================================
+%% Chapter thumbs (sidebar chapter markers)
+%% Defaults: Brilliantblau box, white text, 10 mm height.
+%% Override after \usepackage{tud-thesis}, e.g.:
+%%   \renewcommand*{\chapterthumbboxcolor}{Dunkelblau}
+%% ============================================================
+\RequirePackage{chapterthumb}
+\RequirePackage{scrlayer-scrpage}
+\AddLayersToPageStyle{@everystyle@}{chapterthumb}
+\addtokomafont{chapterthumb}{\bfseries}
+\renewcommand*{\chapterthumbboxcolor}{Brilliantblau}
+\renewcommand*{\chapterthumbcolor}{white}
+\renewcommand*{\chapterthumbheight}{10mm}
+\renewcommand*{\firstchapterthumbskip}{0sp}
+
+%% ============================================================
+%% \confirmation — statutory declaration page
+%% ============================================================
 \newcommand{\confirmation}{%
   \chapter*{%
     \iflanguage{ngerman}{Selbstständigkeitserklärung}{Statutory Declaration}%

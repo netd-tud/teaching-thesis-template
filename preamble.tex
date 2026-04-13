@@ -102,16 +102,9 @@
 
 \usepackage{tud-colors}    % TUD CD color palette
 \usepackage{tud-titlepage} % title page + metadata commands (\faculty, \thesis, ...)
-\usepackage{tud-thesis}    % heading styling + \confirmation
+\usepackage{tud-thesis}    % heading styling + \confirmation + chapterthumb
 % For black headings add: \renewcommand{\headingcolor}{black}
-\usepackage{chapterthumb}
-\usepackage{scrlayer-scrpage}
-\AddLayersToPageStyle{@everystyle@}{chapterthumb}
-\addtokomafont{chapterthumb}{\bfseries}
-\renewcommand*{\chapterthumbboxcolor}{Brilliantblau}
-\renewcommand*{\chapterthumbcolor}{white}
-\renewcommand*{\chapterthumbheight}{10mm}
-\renewcommand*{\firstchapterthumbskip}{0sp}
+% For chapterthumb color override: \renewcommand*{\chapterthumbboxcolor}{Dunkelblau}
 
 % Research question box
 % Change \researchquestioncolor (border + title tab) and \researchquestionbgcolor (fill)
