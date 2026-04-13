@@ -90,7 +90,7 @@
 \def\tud@shapescale{4}              % variant 1
 \def\tud@shapexoffset{-15cm}        % variant 1
 \def\tud@shapeyoffset{40cm}         % variant 1
-\def\tud@metalabelcolor{Brilliantblau} % = shape color in shapes style (tonal default)
+\def\tud@metalabelcolor{white}         % = bg-derived fg in shapes/tonal (Dunkelblau bg → white)
 
 %% For unicolor/legacy: set metalabelcolor from logo color (background-based).
 \newcommand{\tud@setmetalabelcolor}{%
@@ -101,11 +101,18 @@
     \def\tud@metalabelcolor{Brilliantblau}%
   \fi
 }
-%% For shapes style: set upper-block text color and metalabelcolor from shape.
-%% Light shapes (Color2, Gelb, light grays, white) → Dunkelblau upper text.
-%% Dark shapes → white upper text.
-%% metalabelcolor mirrors the shape color for visual cohesion with the shapes.
+%% For shapes style: set upper/lower text colors, metalabelcolor, and logo.
+%% Upper block (on shape):
+%%   Light shapes (Color2, Gelb, light grays, white) → Brilliantblau upper text.
+%%   Dark shapes → white upper text.
+%% Lower block (plain bg):
+%%   Labels (Gutachter:, Betreuer:, graduation) get the background-derived fg color.
+%%   Body text values get the shape color.
+%%   Exception: if both bg and shape are dark (both produce white), the shape color
+%%   would be unreadable on the dark bg → fall back to Blau2 for body text.
 \newcommand{\tud@autoshapecolor}{%
+  \def\tud@ts@white{white}%
+  % 1. Upper text color from shape lightness.
   \def\tud@titleupperfgcolor{white}%
   \@for\tud@iter:={Blau2,Violett2,Magenta2,Rot2,Orange2,Gelb1,Gelb2,%
                    Oliv2,Gruen2,Tuerkis2,Grau40,Grau20,Grau10,white}\do{%
@@ -113,10 +120,21 @@
       \def\tud@titleupperfgcolor{Brilliantblau}%
     \fi
   }%
-  \edef\tud@metalabelcolor{\tud@shapecolor}%
+  % 2. Swap lower text and label colors.
+  %    \tud@titlefgcolor is the background-derived color (white or Brilliantblau).
+  %    After swap: labels = that color, body text values = shape color.
+  \edef\tud@ts@oldfg{\tud@titlefgcolor}%
+  \edef\tud@titlefgcolor{\tud@shapecolor}%
+  \edef\tud@metalabelcolor{\tud@ts@oldfg}%
+  % 3. Dark+dark fallback: if bg was dark (oldfg=white) AND shape is dark
+  %    (upperfgcolor=white), the shape color as body text is unreadable → Blau2.
+  \ifx\tud@ts@oldfg\tud@ts@white
+    \ifx\tud@titleupperfgcolor\tud@ts@white
+      \def\tud@titlefgcolor{Blau2}%
+    \fi
+  \fi
+  % 4. Title accent and logo follow upper block.
   \edef\tud@titleaccentcolor{\tud@titleupperfgcolor}%
-  % Logo sits in the upper block (on the shape) → match upper fg color.
-  \def\tud@ts@white{white}%
   \ifx\tud@titleupperfgcolor\tud@ts@white
     \def\tud@logocolor{weiss}%
   \else
@@ -401,11 +419,12 @@
           \setlength{\parskip}{1.5pt}%
           \setlength{\parindent}{0pt}%
           \raggedright\sffamily\color{\tud@titlefgcolor}%
-          % Thesis type + degree abbreviation
-          {\usekomafont{subject}%
+          % Thesis type + degree abbreviation (treated as a label)
+          {\usekomafont{subject}\color{\tud@metalabelcolor}%
             \tud@thesislabel%
             \ifx\tud@graduationshort\@empty\else\space(\tud@graduationshort)\fi
           \par}%
+          \vspace{\baselineskip}%
           % Meta: label above value, two-column layout.
           % l columns (not p{}) so that \and → & is recognized by \halign.
           % Each section: label row, then value row(s).
@@ -444,7 +463,7 @@
             \ifx\tud@reviewer\@empty\else
               \tud@reviewer
             \fi
-            \\[\smallskipamount]
+            \\[\baselineskip]
             % Supervisor section: full-width label, then value row(s)
             \ifx\tud@supervisor\@empty\else
               \multicolumn{2}{@{}l@{}}{%
@@ -458,7 +477,7 @@
               }%
               \\
               \tud@supervisor
-              \\[\smallskipamount]
+              \\[\baselineskip]
             \fi
             % Matrnr | Date: label row then value row
             \ifx\tud@matriculationnumber\@empty\else
