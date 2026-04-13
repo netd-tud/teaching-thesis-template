@@ -75,11 +75,6 @@
 \usepackage{ellipsis}
 \let\ellipsispunctuation\relax
 
-\usepackage{tcolorbox}
-\tcbuselibrary{many}
-\usetikzlibrary{calc}
-\usepackage{fontawesome5}
-
 \input{minted} % code styles (minted replaces listings)
 
 % use this custom environment for equations
@@ -102,52 +97,7 @@
 
 \usepackage{tud-colors}    % TUD CD color palette
 \usepackage{tud-titlepage} % title page + metadata commands (\faculty, \thesis, ...)
-\usepackage{tud-thesis}    % heading styling + \confirmation + chapterthumb
-% For black headings add: \renewcommand{\headingcolor}{black}
-% For chapterthumb color override: \renewcommand*{\chapterthumbboxcolor}{Dunkelblau}
-
-% Research question box
-% Change \researchquestioncolor (border + title tab) and \researchquestionbgcolor (fill)
-% to any xcolor name or expression, e.g. \renewcommand{\researchquestioncolor}{Rot1}
-\newcommand{\researchquestiontitle}{Research Questions}
-\newcommand{\researchquestioncolor}{Brilliantblau}
-\newcommand{\researchquestionbgcolor}{Blau2!30!white}
-\newenvironment{research-question}{%
-  \renewcommand{\labelitemi}{\color{\researchquestioncolor}\faIcon{caret-right}}%
-  \begin{itemize}[leftmargin=0.5em, labelwidth=0.5em, rightmargin=0.0em,
-                  itemsep=0pt, labelsep=0.3em]%
-}{\end{itemize}}
-\tcolorboxenvironment{research-question}{
-  title={\researchquestiontitle},
-  left=0.5em,
-  right=0.5em,
-  fonttitle=\sffamily\bfseries,
-  width=\linewidth-3pt,
-  enhanced,
-  attach boxed title to top left,
-  coltitle=white,
-  colback=\researchquestionbgcolor,
-  arc=2pt,
-  boxed title style={empty, arc=0pt, outer arc=0pt, boxrule=0pt},
-  frame style={empty, arc=0pt, outer arc=0pt, boxrule=0pt},
-  underlay boxed title={
-    \draw[fill=\researchquestioncolor, draw=\researchquestioncolor, line width=2pt]
-      ([yshift=-2pt]title.north west)
-      arc[radius=2pt, start angle=180, end angle=90]
-      -- (title.north east)
-      arc[radius=3pt, start angle=90, end angle=45]
-      -- ($(title.north east) + (\tcboxedtitleheight,-\tcboxedtitleheight)$)
-      -- (title.south west) -- cycle;
-  },
-  frame code={
-    \draw[fill=\researchquestionbgcolor, draw=\researchquestioncolor, line width=2pt]
-      (frame.north west)
-      -- ([yshift=2pt]frame.south west)
-      arc[radius=2pt, start angle=180, end angle=270]
-      -- ([xshift=-2pt]frame.south east)
-      arc[radius=2pt, start angle=-90, end angle=0]
-      -- ([yshift=-2pt]frame.north east)
-      arc[radius=2pt, start angle=0, end angle=90]
-      -- cycle;
-  }
-}
+\usepackage{tud-thesis}    % heading styling + \confirmation + chapterthumb + research-question
+% For black headings:           \renewcommand{\headingcolor}{black}
+% For custom research-question: \renewcommand{\researchquestioncolor}{Rot1}
+%                                \colorlet{tud@rqbg}{Rot1!20!white}

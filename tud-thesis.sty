@@ -1,5 +1,6 @@
 %% tud-thesis.sty
-%% General TUD thesis styling: colored headings and statutory declaration page.
+%% General TUD thesis styling: colored headings, statutory declaration page,
+%% chapter thumbs, and the research-question tcolorbox environment.
 %%
 %% Provides:
 %%   - Colored, sans-serif chapter/section headings via KOMA's \setkomafont.
@@ -7,11 +8,16 @@
 %%       \renewcommand{\headingcolor}{black}
 %%   - \confirmation — typesets a bilingual (DE/EN) statutory declaration page,
 %%     using \@author and \@date from the document preamble.
+%%   - Chapter thumbs (sidebar chapter markers) via chapterthumb + scrlayer-scrpage.
+%%   - research-question tcolorbox environment, automatically colored from the
+%%     active \titlestyle (background color → frame + fill).
 %%
-%% Requires: KOMA-Script class (scrbook/scrreprt/scrartcl), tud-colors, babel.
+%% Requires: KOMA-Script class (scrbook/scrreprt/scrartcl), tud-colors, babel,
+%%           tcolorbox, fontawesome5.
+%% tud-titlepage must be loaded before tud-thesis so that \tud@bgcolor etc. exist.
 
 \NeedsTeXFormat{LaTeX2e}
-\ProvidesPackage{tud-thesis}[2026/04/01 TUD Thesis Styling]
+\ProvidesPackage{tud-thesis}[2026/04/13 TUD Thesis Styling]
 
 \@ifundefined{setkomafont}{%
   \PackageError{tud-thesis}%
@@ -30,20 +36,25 @@
 \setkomafont{disposition}{\sffamily\color{\headingcolor}}
 
 %% ============================================================
-%% \confirmation — statutory declaration page
+%% tcolorbox + fontawesome5 (required by research-question)
 %% ============================================================
+\RequirePackage{tcolorbox}
+\tcbuselibrary{many}
+\usetikzlibrary{calc}
+\RequirePackage{fontawesome5}
+
 %% ============================================================
 %% Chapter thumbs (sidebar chapter markers)
-%% Defaults: Brilliantblau box, white text, 10 mm height.
-%% Override after \usepackage{tud-thesis}, e.g.:
+%% Box and text colors are set by \tudupdatecolors at \begin{document}
+%% (see below). Override after \usepackage{tud-thesis}, e.g.:
 %%   \renewcommand*{\chapterthumbboxcolor}{Dunkelblau}
 %% ============================================================
 \RequirePackage{chapterthumb}
 \RequirePackage{scrlayer-scrpage}
 \AddLayersToPageStyle{@everystyle@}{chapterthumb}
 \addtokomafont{chapterthumb}{\bfseries}
-\renewcommand*{\chapterthumbboxcolor}{Brilliantblau}
-\renewcommand*{\chapterthumbcolor}{white}
+\renewcommand*{\chapterthumbboxcolor}{Brilliantblau} % updated by \tudupdatecolors
+\renewcommand*{\chapterthumbcolor}{white}            % updated by \tudupdatecolors
 \renewcommand*{\chapterthumbheight}{10mm}
 \renewcommand*{\firstchapterthumbskip}{0sp}
 
@@ -67,3 +78,78 @@
   \par\bigskip\noindent
   Dresden,\space\@date\hfill\@author%
 }
+
+%% ============================================================
+%% research-question environment
+%% A tcolorbox for listing research questions with a styled title tab.
+%%
+%% Colors are automatically derived from the active \titlestyle at
+%% \begin{document} via \tudupdatecolors:
+%%   \researchquestioncolor  — frame + title tab (= \tud@bgcolor)
+%%   tud@rqbg                — named color for fill (= \tud@bgcolor!20!white)
+%%
+%% To override after \usepackage{tud-thesis}:
+%%   \renewcommand{\researchquestioncolor}{Rot1}
+%%   \colorlet{tud@rqbg}{Rot1!20!white}
+%% To rename the title tab:
+%%   \renewcommand{\researchquestiontitle}{Forschungsfragen}
+%%
+%% If \titlestyle is called inside the document body, call \tudupdatecolors
+%% afterwards to re-sync colors.
+%% ============================================================
+\newcommand{\researchquestiontitle}{Research Questions}
+\newcommand{\researchquestioncolor}{Dunkelblau}  % \edef'd to \tud@bgcolor by \tudupdatecolors
+\colorlet{tud@rqbg}{Dunkelblau!20!white}         % named color; \colorlet'd by \tudupdatecolors
+\newenvironment{research-question}{%
+  \renewcommand{\labelitemi}{\color{\researchquestioncolor}\faIcon{caret-right}}%
+  \begin{itemize}[leftmargin=0.5em, labelwidth=0.5em, rightmargin=0.0em,
+                  itemsep=0pt, labelsep=0.3em]%
+}{\end{itemize}}
+\tcolorboxenvironment{research-question}{
+  title={\researchquestiontitle},
+  left=0.5em,
+  right=0.5em,
+  fonttitle=\sffamily\bfseries,
+  width=\linewidth-3pt,
+  enhanced,
+  attach boxed title to top left,
+  coltitle=white,
+  colback=tud@rqbg,
+  arc=2pt,
+  boxed title style={empty, arc=0pt, outer arc=0pt, boxrule=0pt},
+  frame style={empty, arc=0pt, outer arc=0pt, boxrule=0pt},
+  underlay boxed title={
+    \draw[fill=\researchquestioncolor, draw=\researchquestioncolor, line width=2pt]
+      ([yshift=-2pt]title.north west)
+      arc[radius=2pt, start angle=180, end angle=90]
+      -- (title.north east)
+      arc[radius=3pt, start angle=90, end angle=45]
+      -- ($(title.north east) + (\tcboxedtitleheight,-\tcboxedtitleheight)$)
+      -- (title.south west) -- cycle;
+  },
+  frame code={
+    \draw[fill=tud@rqbg, draw=\researchquestioncolor, line width=2pt]
+      (frame.north west)
+      -- ([yshift=2pt]frame.south west)
+      arc[radius=2pt, start angle=180, end angle=270]
+      -- ([xshift=-2pt]frame.south east)
+      arc[radius=2pt, start angle=-90, end angle=0]
+      -- ([yshift=-2pt]frame.north east)
+      arc[radius=2pt, start angle=0, end angle=90]
+      -- cycle;
+  }
+}
+
+%% ============================================================
+%% \tudupdatecolors — sync theme-linked colors to the active \titlestyle
+%%
+%% Called automatically at \begin{document}. If \titlestyle is called
+%% inside the document body, call \tudupdatecolors afterwards.
+%% ============================================================
+\newcommand{\tudupdatecolors}{%
+  %% Research-question: frame = bgcolor (resolved to a plain color name for TikZ)
+  \edef\researchquestioncolor{\tud@bgcolor}%
+  %% Research-question: fill = bgcolor!20!white (named color tud@rqbg)
+  \colorlet{tud@rqbg}{\tud@bgcolor!20!white}%
+}
+\AtBeginDocument{\tudupdatecolors}
