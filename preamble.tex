@@ -1,3 +1,9 @@
+\usepackage{iftex} % engine detection — also loaded by noto, but needed earlier
+% pdfLaTeX needs T1 encoding for correct < > glyphs (esp. in minted/fancyvrb).
+% LuaLaTeX uses OpenType natively — fontenc is irrelevant there.
+\ifPDFTeX
+  \usepackage[T1]{fontenc}
+\fi
 \usepackage{noto}
 
 \usepackage{babel}
@@ -74,14 +80,14 @@
 \usetikzlibrary{calc}
 \usepackage{fontawesome5}
 
-\input{lst} % code styles
+\input{minted} % code styles (minted replaces listings)
 
 % use this custom environment for equations
 \newenvironment{conditions}
   {\par\vspace{\abovedisplayskip}\noindent\begin{tabular}{>{$}l<{$} @{${}={}$} l}}
   {\end{tabular}\par\vspace{\belowdisplayskip}}
 
-\usepackage{float}
+% \usepackage{float} % superseded by floatrow
 
 % Page layout — standard German thesis margins (overrides KOMA typearea)
 \usepackage[
