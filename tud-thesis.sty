@@ -147,6 +147,16 @@
 %% inside the document body, call \tudupdatecolors afterwards.
 %% ============================================================
 \newcommand{\tudupdatecolors}{%
+  %% Chapterthumb: box = shape color (lazy — \chapterthumbboxcolor expands \tud@shapecolor)
+  \renewcommand*{\chapterthumbboxcolor}{\tud@shapecolor}%
+  %% Chapterthumb: text color — white for dark shapes, Brilliantblau for light shapes
+  \renewcommand*{\chapterthumbcolor}{white}%
+  \@for\tud@ts@iter:={Blau2,Violett2,Magenta2,Rot2,Orange2,Gelb1,Gelb2,%
+                      Oliv2,Gruen2,Tuerkis2,Grau40,Grau20,Grau10,white}\do{%
+    \ifx\tud@shapecolor\tud@ts@iter
+      \renewcommand*{\chapterthumbcolor}{Brilliantblau}%
+    \fi
+  }%
   %% Research-question: frame = bgcolor (resolved to a plain color name for TikZ)
   \edef\researchquestioncolor{\tud@bgcolor}%
   %% Research-question: fill = bgcolor!20!white (named color tud@rqbg)
