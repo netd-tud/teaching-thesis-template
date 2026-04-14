@@ -49,6 +49,11 @@
 \setlength{\tud@textwidth}{\dimexpr\paperwidth-\tud@marginleft-\tud@marginright}
 \newlength{\tud@metacol}  % equal-width metadata column (half text width minus half gap)
 \setlength{\tud@metacol}{\dimexpr0.5\tud@textwidth-0.5em\relax}
+% Descent space below the logo's text/shape baseline (≈19.14% of logo height,
+% derived from SVG proportions: (91.8471−74.2714)/91.8471 ≈ 0.1914).
+% Used to position the content block 15 mm below the baseline, not the image bottom.
+\newlength{\tud@logodescent}
+\setlength{\tud@logodescent}{\dimexpr\tud@logoheight * 191 / 1000\relax}
 \newcount\tud@supcount   % counts \and calls in \supervisor for column/row placement
 % Separator tokens used by \and inside supervisor tabular row.
 % Defined at package level so catcode 4 is guaranteed for &.
@@ -383,7 +388,7 @@
       \node[anchor=north west, inner sep=0pt, outer sep=0pt,
             text width=\tud@textwidth, align=left]
         at ([xshift=\tud@marginleft,
-             yshift=\the\dimexpr-\tud@margintop-\tud@logoheight-\tud@margintop\relax]%
+             yshift=\the\dimexpr-\tud@margintop-\tud@logoheight+\tud@logodescent-\tud@margintop\relax]%
             current page.north west)
         {%
           \setlength{\parskip}{0pt}%
@@ -439,55 +444,49 @@
             }%
           \fi
           {\usekomafont{tudmeta}%
-          \global\tud@supcount=0
-          % \and uses \csname to resolve \ifodd entirely inside the csname expansion,
-          % preventing & from leaking \else..\fi tokens into the next tabular cell.
-          \def\and{%
-            \global\advance\tud@supcount by 1
-            \csname tud@sup@sep@\ifodd\tud@supcount odd\else even\fi\endcsname
-          }%
+          \def\and{\newline}%
           \begin{tabular}[t]{@{}p{\tud@metacol}@{\hspace{1em}}p{\tud@metacol}@{}}
-            % Reviewer section: label row then value row
+            % --- Row 1: Reviewer (left) ---
             \ifx\tud@professor\@empty\else
               \textcolor{\tud@metalabelcolor}{\tud@lbl@reviewer}%
             \fi
-            &
-            \ifx\tud@reviewer\@empty\else
-              \textcolor{\tud@metalabelcolor}{\tud@lbl@secondreviewer}%
-            \fi
-            \\
+            & \\
             \ifx\tud@professor\@empty\else
               \tud@professor
             \fi
-            &
+            & \\[\medskipamount]
+            % --- Row 2: Second Reviewer (left) | Matrnr (right) ---
             \ifx\tud@reviewer\@empty\else
-              \tud@reviewer
+              \textcolor{\tud@metalabelcolor}{\tud@lbl@secondreviewer}%
             \fi
-            \\[\baselineskip]
-            % Supervisor section: full-width label, then value row(s)
-            \ifx\tud@supervisor\@empty\else
-              \multicolumn{2}{@{}l@{}}{%
-                \textcolor{\tud@metalabelcolor}{%
-                  \ifx\tud@ismultisuper\@empty
-                    \tud@lbl@supervisor
-                  \else
-                    \tud@lbl@supervisors
-                  \fi
-                }%
-              }%
-              \\
-              \tud@supervisor
-              \\[\baselineskip]
-            \fi
-            % Matrnr | Date: label row then value row
+            &
             \ifx\tud@matriculationnumber\@empty\else
               \textcolor{\tud@metalabelcolor}{\tud@lbl@matrnr}%
             \fi
-            &
-            \textcolor{\tud@metalabelcolor}{\tud@lbl@submitted}%
             \\
+            \ifx\tud@reviewer\@empty\else
+              \tud@reviewer
+            \fi
+            &
             \ifx\tud@matriculationnumber\@empty\else
               \tud@matriculationnumber
+            \fi
+            \\[\medskipamount]
+            % --- Row 3: Supervisor(s) (left) | Date (right, starts at first supervisor height) ---
+            \ifx\tud@supervisor\@empty\else
+              \textcolor{\tud@metalabelcolor}{%
+                \ifx\tud@ismultisuper\@empty
+                  \tud@lbl@supervisor
+                \else
+                  \tud@lbl@supervisors
+                \fi
+              }%
+            \fi
+            &
+            \textcolor{\tud@metalabelcolor}{\tud@lbl@submitted}
+            \\
+            \ifx\tud@supervisor\@empty\else
+              \tud@supervisor
             \fi
             &
             \@date
