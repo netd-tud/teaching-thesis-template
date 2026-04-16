@@ -31,6 +31,7 @@
 \RequirePackage{tud-colors}
 \RequirePackage{graphicx}
 \RequirePackage{tikz}
+\usetikzlibrary{calc}
 % \iflanguage is provided by babel (loaded in thesis.tex)
 
 %% ============================================================
@@ -47,8 +48,25 @@
 % = 210mm - 15mm - 10mm = 185mm
 \newlength{\tud@textwidth}
 \setlength{\tud@textwidth}{\dimexpr\paperwidth-\tud@marginleft-\tud@marginright}
-\newlength{\tud@metacol}  % equal-width metadata column (half text width minus half gap)
-\setlength{\tud@metacol}{\dimexpr0.5\tud@textwidth-0.5em\relax}
+%% ============================================================
+%% Variant-1 shape geometry (static, A4, shapes/tonal defaults)
+%% Derived from: scale=4, rotation=90° (step 2), xoffset=-15cm, yoffset=40cm.
+%% effectiveshapeunit = 4×(210mm/600) = 1.4 mm/u
+%% Shape origin: (−45mm, 548.5mm) from page bottom-left.
+%% Only visible corner: Fragment-2 vertex (−124.3,−300) rotated 90°
+%%   → page coords x=129.02mm, y=128.5mm from bottom-left.
+%% To update for a different variant, recalculate tud@v@cornerx and
+%% tud@v@shapelowery, then tud@metacolL/R will follow automatically.
+%% ============================================================
+\newlength{\tud@v@shapelowery}  \setlength{\tud@v@shapelowery}{128.5mm}
+\newlength{\tud@v@cornerx}      \setlength{\tud@v@cornerx}{129.02mm}
+\newlength{\tud@authorblockY}
+\setlength{\tud@authorblockY}{\dimexpr\tud@v@shapelowery + 3\tud@margintop/2\relax}
+%% Meta-table: left col fills up to cornerx; right col starts at cornerx.
+\newlength{\tud@metacolL}
+\setlength{\tud@metacolL}{\dimexpr\tud@v@cornerx - \tud@marginleft - 1em\relax}
+\newlength{\tud@metacolR}
+\setlength{\tud@metacolR}{\dimexpr\paperwidth - \tud@marginright - \tud@v@cornerx\relax}
 % Descent space below the logo's text/shape baseline (≈19.14% of logo height,
 % derived from SVG proportions: (91.8471−74.2714)/91.8471 ≈ 0.1914).
 % Used to position the content block 15 mm below the baseline, not the image bottom.
@@ -194,7 +212,7 @@
 \setkomafont{author}{\large\bfseries\color{\tud@titleupperfgcolor}}
 \setkomafont{subject}{\large\color{\tud@titlefgcolor}}
 \newkomafont{tudorgunit}{\footnotesize\color{\tud@titleupperfgcolor}}
-\newkomafont{tudmeta}{\small\color{\tud@titlefgcolor}}
+\newkomafont{tudmeta}{\normalsize\color{\tud@titlefgcolor}}
 
 %% ============================================================
 %% User-facing metadata commands
@@ -383,9 +401,8 @@
       \node[anchor=north west, inner sep=0pt, outer sep=0pt]
         at ([xshift=\tud@marginleft, yshift=-\tud@margintop]current page.north west)
         {\includegraphics[height=\tud@logoheight]{figures/tud-logo-\tud@logocolor-\tud@logovariant}};
-      %--- Title / author content block ---%
-      %    Starts below the logo
-      \node[anchor=north west, inner sep=0pt, outer sep=0pt,
+      %--- Node A: Organisational unit — north-west, below logo ---%
+      \node[name=tudorgunit, anchor=north west, inner sep=0pt, outer sep=0pt,
             text width=\tud@textwidth, align=left]
         at ([xshift=\tud@marginleft,
              yshift=\the\dimexpr-\tud@margintop-\tud@logoheight+\tud@logodescent-\tud@margintop\relax]%
@@ -393,27 +410,41 @@
         {%
           \setlength{\parskip}{0pt}%
           \setlength{\parindent}{0pt}%
-          \raggedright\sffamily\color{\tud@titleupperfgcolor}%
-          % Organizational hierarchy (stacked: faculty / institute / chair)
+          \raggedright\sffamily%
           \ifx\tud@faculty\@empty\else
             {\usekomafont{tudorgunit}%
               \tud@faculty%
               \ifx\tud@institute\@empty\else\\\tud@institute\fi
               \ifx\tud@chair\@empty\else\\\tud@chair\fi
-            \par\vspace{6mm}}%
+            }%
           \fi
-          % Title
-          {\usekomafont{title}\@title\par}%
-          % Subtitle (stored by KOMA's \subtitle command into \@subtitle)
-          \ifx\@subtitle\@empty\else
-            \vspace{3mm}%
-            {\usekomafont{subtitle}\@subtitle\par}%
-          \fi
-          \vspace{5mm}%
-          % Author name + email (upper block — use upper fg color)
+        };
+      %--- Node B: Author + email — south-west, 2×margintop above shape lower boundary ---%
+      \node[name=tudauthor, anchor=south west, inner sep=0pt, outer sep=0pt,
+            text width=\tud@textwidth, align=left]
+        at ([xshift=\tud@marginleft, yshift=\tud@authorblockY]current page.south west)
+        {%
+          \setlength{\parskip}{0pt}%
+          \setlength{\parindent}{0pt}%
+          \raggedright\sffamily%
           {\usekomafont{author}\@author\par}%
           \ifx\tud@email\@empty\else
             {\usekomafont{tudmeta}\color{\tud@titleupperfgcolor}\tud@email\par}%
+          \fi
+        };
+      %--- Node C: Title + subtitle — west anchor, vertically centered between A and B ---%
+      \coordinate (tudmid) at ($(tudorgunit.south west)!0.5!(tudauthor.north west)$);
+      \node[anchor=west, inner sep=0pt, outer sep=0pt,
+            text width=\tud@textwidth, align=left]
+        at ([xshift=\tud@marginleft]current page.west |- tudmid)
+        {%
+          \setlength{\parskip}{0pt}%
+          \setlength{\parindent}{0pt}%
+          \raggedright\sffamily%
+          {\usekomafont{title}\@title\par}%
+          \ifx\@subtitle\@empty\else
+            \vspace{6mm}%
+            {\usekomafont{subtitle}\@subtitle\par}%
           \fi
         };
       %--- Metadata block: anchored to bottom-left ---%
@@ -445,7 +476,7 @@
           \fi
           {\usekomafont{tudmeta}%
           \def\and{\newline}%
-          \begin{tabular}[t]{@{}p{\tud@metacol}@{\hspace{1em}}p{\tud@metacol}@{}}
+          \begin{tabular}[t]{@{}p{\tud@metacolL}@{\hspace{1em}}p{\tud@metacolR}@{}}
             % --- Row 1: Reviewer (left) ---
             \ifx\tud@professor\@empty\else
               \textcolor{\tud@metalabelcolor}{\tud@lbl@reviewer}%
