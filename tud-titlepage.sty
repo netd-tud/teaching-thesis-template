@@ -221,7 +221,25 @@
 \newcommand{\department}[1]{\def\tud@department{#1}}
 \newcommand{\institute}[1]{\def\tud@institute{#1}}
 \newcommand{\chair}[1]{\def\tud@chair{#1}}
-\newcommand{\thesis}[1]{\def\tud@thesistype{#1}}
+%% Apply thesis-type color preset (bgcolor, shapecolor) without touching shape geometry.
+%% Called by \thesis; \titlestyle always overrides this when used explicitly after.
+\newcommand{\tud@applythesiscolors}[2]{%
+  \def\tud@bgcolor{#1}\def\tud@shapecolor{#2}%
+  \tud@autologocolor\tud@autoshapecolor
+}
+\newcommand{\thesis}[1]{%
+  \def\tud@thesistype{#1}%
+  \def\tud@ts@msc{master}\def\tud@ts@dip{diploma}\def\tud@ts@phd{phd}%
+  \ifx\tud@thesistype\tud@ts@msc
+    \tud@applythesiscolors{Tuerkis1}{Tuerkis2}%
+  \else\ifx\tud@thesistype\tud@ts@dip
+    \tud@applythesiscolors{Tuerkis1}{Tuerkis2}%
+  \else\ifx\tud@thesistype\tud@ts@phd
+    \tud@applythesiscolors{Violett1}{Violett2}%
+  \else % bachelor (default)
+    \tud@applythesiscolors{Dunkelblau}{Brilliantblau}%
+  \fi\fi\fi
+}
 \newcommand{\graduation}[2][]{\def\tud@graduationshort{#1}\def\tud@graduationlong{#2}}
 \newcommand{\matriculationnumber}[1]{\def\tud@matriculationnumber{#1}}
 \newcommand{\supervisor}[1]{\def\tud@supervisor{#1}}
@@ -341,12 +359,16 @@
 %% Helper: thesis type label (bilingual)
 %% ============================================================
 \newcommand{\tud@thesislabel}{%
-  \def\@tud@tmpmaster{master}%
-  \ifx\tud@thesistype\@tud@tmpmaster
+  \def\@tud@tmpa{master}\def\@tud@tmpb{diploma}\def\@tud@tmpc{phd}%
+  \ifx\tud@thesistype\@tud@tmpa
     \iflanguage{ngerman}{Masterarbeit}{Master's Thesis}%
+  \else\ifx\tud@thesistype\@tud@tmpb
+    \iflanguage{ngerman}{Diplomarbeit}{Diploma Thesis}%
+  \else\ifx\tud@thesistype\@tud@tmpc
+    \iflanguage{ngerman}{Dissertation}{Doctoral Thesis}%
   \else
     \iflanguage{ngerman}{Bachelorarbeit}{Bachelor's Thesis}%
-  \fi
+  \fi\fi\fi
 }
 
 %% Bilingual labels
@@ -413,9 +435,9 @@
           \raggedright\sffamily%
           \ifx\tud@faculty\@empty\else
             {\usekomafont{tudorgunit}%
-              \tud@faculty%
-              \ifx\tud@institute\@empty\else\\\tud@institute\fi
-              \ifx\tud@chair\@empty\else\\\tud@chair\fi
+              \tud@faculty\rule[-\dp\strutbox]{0pt}{\dp\strutbox}%
+              \ifx\tud@institute\@empty\else\\\tud@institute\rule[-\dp\strutbox]{0pt}{\dp\strutbox}\fi%
+              \ifx\tud@chair\@empty\else\\\tud@chair\fi%
             }%
           \fi
         };
