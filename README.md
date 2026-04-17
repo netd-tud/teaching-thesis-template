@@ -70,7 +70,7 @@ Set in `thesis.tex` before `\maketitle`:
 \title{<thesis title>}
 % \subtitle{<subtitle>}
 
-\thesis{master}            % master | bachelor
+\thesis{master}            % master | bachelor — also sets accent color scheme
 \graduation[<degree>]{<full degree name>}
 
 \author{<your name>}
@@ -166,6 +166,19 @@ Headings default to `Brilliantblau`. To use black headings:
 ```latex
 \renewcommand{\headingcolor}{black}
 ```
+
+## Color scheme
+
+`\thesis` sets an accent color that is automatically applied to the chapter thumb markers and research-question boxes. `\titlestyle` does the same from the title page background color. Both sync derived colors via `\tudupdatecolors`.
+
+To override after `\thesis` or `\titlestyle`:
+
+```latex
+\renewcommand*{\chapterthumbboxcolor}{<color>}  % chapter thumb background
+\renewcommand{\researchquestioncolor}{<color>}  % research-question frame + fill
+```
+
+If `\titlestyle` is called inside the document body, call `\tudupdatecolors` afterwards to re-sync.
 
 ## TUD color palette
 
