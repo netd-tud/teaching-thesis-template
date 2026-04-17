@@ -34,6 +34,10 @@
 %% ============================================================
 \newcommand{\headingcolor}{Brilliantblau}
 \setkomafont{disposition}{\sffamily\color{\headingcolor}}
+% TOC entries: sans-serif to match heading style
+\addtokomafont{chapterentry}{\sffamily}
+\DeclareTOCStyleEntry[entryformat=\sffamily,pagenumberformat=\sffamily]{tocline}{section}
+\DeclareTOCStyleEntry[entryformat=\sffamily,pagenumberformat=\sffamily]{tocline}{subsection}
 
 %% ============================================================
 %% tcolorbox + fontawesome5 (required by research-question)
@@ -53,7 +57,7 @@
 \RequirePackage{scrlayer-scrpage}
 \AddLayersToPageStyle{@everystyle@}{chapterthumb}
 \addtokomafont{chapterthumb}{\bfseries}
-\renewcommand*{\chapterthumbboxcolor}{Brilliantblau} % updated by \tudupdatecolors
+\renewcommand*{\chapterthumbboxcolor}{Dunkelblau} % updated by \tudupdatecolors
 \renewcommand*{\chapterthumbcolor}{white}            % updated by \tudupdatecolors
 \renewcommand*{\chapterthumbheight}{10mm}
 \renewcommand*{\firstchapterthumbskip}{0sp}
@@ -90,7 +94,6 @@
 %%
 %% To override after \usepackage{tud-thesis}:
 %%   \renewcommand{\researchquestioncolor}{Rot1}
-%%   \colorlet{tud@rqbg}{Rot1!20!white}
 %% To rename the title tab:
 %%   \renewcommand{\researchquestiontitle}{Forschungsfragen}
 %%
@@ -99,7 +102,6 @@
 %% ============================================================
 \newcommand{\researchquestiontitle}{Research Questions}
 \newcommand{\researchquestioncolor}{Dunkelblau}  % \edef'd to \tud@bgcolor by \tudupdatecolors
-\colorlet{tud@rqbg}{Dunkelblau!20!white}         % named color; \colorlet'd by \tudupdatecolors
 \newenvironment{research-question}{%
   \renewcommand{\labelitemi}{\color{\researchquestioncolor}\faIcon{caret-right}}%
   \begin{itemize}[leftmargin=0.5em, labelwidth=0.5em, rightmargin=0.0em,
@@ -114,7 +116,7 @@
   enhanced,
   attach boxed title to top left,
   coltitle=white,
-  colback=tud@rqbg,
+  colback=\researchquestioncolor!20!white,
   arc=2pt,
   boxed title style={empty, arc=0pt, outer arc=0pt, boxrule=0pt},
   frame style={empty, arc=0pt, outer arc=0pt, boxrule=0pt},
@@ -128,7 +130,7 @@
       -- (title.south west) -- cycle;
   },
   frame code={
-    \draw[fill=tud@rqbg, draw=\researchquestioncolor, line width=2pt]
+    \draw[fill=\researchquestioncolor!20!white, draw=\researchquestioncolor, line width=2pt]
       (frame.north west)
       -- ([yshift=2pt]frame.south west)
       arc[radius=2pt, start angle=180, end angle=270]
@@ -143,23 +145,28 @@
 %% ============================================================
 %% \tudupdatecolors — sync theme-linked colors to the active \titlestyle
 %%
-%% Called automatically at \begin{document}. If \titlestyle is called
-%% inside the document body, call \tudupdatecolors afterwards.
+%% Called automatically after every \thesis{} call via the patched
+%% \tud@applythesiscolors below. If \titlestyle is called inside the
+%% document body, call \tudupdatecolors afterwards to re-sync.
 %% ============================================================
 \newcommand{\tudupdatecolors}{%
-  %% Chapterthumb: box = shape color (lazy — \chapterthumbboxcolor expands \tud@shapecolor)
-  \renewcommand*{\chapterthumbboxcolor}{\tud@shapecolor}%
-  %% Chapterthumb: text color — white for dark shapes, Brilliantblau for light shapes
+  %% Chapterthumb: box = bgcolor
+  \renewcommand*{\chapterthumbboxcolor}{\tud@bgcolor}%
+  %% Chapterthumb: text — white for dark bg, Brilliantblau for light bg
   \renewcommand*{\chapterthumbcolor}{white}%
   \@for\tud@ts@iter:={Blau2,Violett2,Magenta2,Rot2,Orange2,Gelb1,Gelb2,%
                       Oliv2,Gruen2,Tuerkis2,Grau40,Grau20,Grau10,white}\do{%
-    \ifx\tud@shapecolor\tud@ts@iter
+    \ifx\tud@bgcolor\tud@ts@iter
       \renewcommand*{\chapterthumbcolor}{Brilliantblau}%
     \fi
   }%
-  %% Research-question: frame = bgcolor (resolved to a plain color name for TikZ)
+  %% Research-question: frame + fill derive from bgcolor; fill = bgcolor!20!white
   \edef\researchquestioncolor{\tud@bgcolor}%
-  %% Research-question: fill = bgcolor!20!white (named color tud@rqbg)
-  \colorlet{tud@rqbg}{\tud@bgcolor!20!white}%
 }
-\AtBeginDocument{\tudupdatecolors}
+%% Patch \tud@applythesiscolors (called by \thesis{}) so \tudupdatecolors
+%% runs immediately after the colors are set, even in the document body.
+\let\tud@thesis@orig@applycolors\tud@applythesiscolors
+\def\tud@applythesiscolors#1#2{%
+  \tud@thesis@orig@applycolors{#1}{#2}%
+  \tudupdatecolors
+}
