@@ -1,0 +1,560 @@
+%% tud-titlepage.sty
+%% TU Dresden Corporate Design title page for KOMA-Script thesis template.
+%%
+%% Provides:
+%%   - Metadata commands: \faculty, \institute, \chair, \thesis, \graduation,
+%%     \supervisor (supports \and for multiple names), \professor, \reviewer,
+%%     \matriculationnumber, \email
+%%   - Three title styles via \titlestyle{...}:
+%%       legacy     — white background, no shapes (former default)
+%%       unicolor   — full-page solid color background
+%%       shapes     — full-page background with the TUD CD logo-mark shape overlay
+%%   - Shape placement control: \titleshapevariant (presets 1–5),
+%%     \titleshaperotation (steps of 45°), \titleshapescale, \titleshapeoffset
+%%   - Automatic logo/text color selection based on background color
+%%   - Manual overrides: \logocolor, \logovariant,
+%%     \titlebgcolor, \titleshapecolor, \titletextcolor
+%%
+%% Requires: KOMA-Script class (scrbook/scrreprt/scrartcl), tud-colors,
+%%           graphicx, tikz, babel. Logo files must be present in figures/:
+%%             tud-logo-blau-en.pdf / tud-logo-blau-de.pdf
+%%             tud-logo-weiss-en.pdf / tud-logo-weiss-de.pdf
+
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{tud-titlepage}[2026/04/01 TUD CD Thesis Title Page]
+
+\@ifundefined{setkomafont}{%
+  \PackageError{tud-titlepage}%
+    {A KOMA-Script class is required}%
+    {Load scrreprt, scrartcl, or scrbook before this package.}%
+}{}
+\RequirePackage{tud-colors}
+\RequirePackage{graphicx}
+\RequirePackage{tikz}
+\usetikzlibrary{calc}
+\RequirePackage{iftex}
+\RequirePackage{noto}  % guarantees Noto Sans NFSS families on all engines
+% Capture the NFSS family name noto just set — used to force Noto Sans in \maketitle
+% regardless of what the document's \sfdefault is at render time.
+\edef\tud@notosansfamily{\sfdefault}
+% \iflanguage is provided by babel (loaded in thesis.tex)
+
+%% ============================================================
+%% Title page dimensions (A4)
+%% ============================================================
+\newlength{\tud@logoheight}   \setlength{\tud@logoheight}{19mm}
+\newlength{\tud@shapeunit}
+\newlength{\tud@effectiveshapeunit}
+\newlength{\tud@marginleft}   \setlength{\tud@marginleft}{15mm}
+\newlength{\tud@marginright}  \setlength{\tud@marginright}{10mm}
+\newlength{\tud@margintop}    \setlength{\tud@margintop}{15mm}
+\newlength{\tud@marginbottom} \setlength{\tud@marginbottom}{23.767mm}
+% Text content width (left margin to right margin)
+% = 210mm - 15mm - 10mm = 185mm
+\newlength{\tud@textwidth}
+\setlength{\tud@textwidth}{\dimexpr\paperwidth-\tud@marginleft-\tud@marginright}
+%% ============================================================
+%% Variant-1 shape geometry (static, A4, shapes/tonal defaults)
+%% Derived from: scale=4, rotation=90° (step 2), xoffset=-15cm, yoffset=40cm.
+%% effectiveshapeunit = 4×(210mm/600) = 1.4 mm/u
+%% Shape origin: (−45mm, 548.5mm) from page bottom-left.
+%% Only visible corner: Fragment-2 vertex (−124.3,−300) rotated 90°
+%%   → page coords x=129.02mm, y=128.5mm from bottom-left.
+%% To update for a different variant, recalculate tud@v@cornerx and
+%% tud@v@shapelowery, then tud@metacolL/R will follow automatically.
+%% ============================================================
+\newlength{\tud@v@shapelowery}  \setlength{\tud@v@shapelowery}{128.5mm}
+\newlength{\tud@v@cornerx}      \setlength{\tud@v@cornerx}{129.02mm}
+\newlength{\tud@authorblockY}
+\setlength{\tud@authorblockY}{\dimexpr\tud@v@shapelowery + 3\tud@margintop/2\relax}
+%% Meta-table: left col fills up to cornerx; right col starts at cornerx.
+\newlength{\tud@metacolL}
+\setlength{\tud@metacolL}{\dimexpr\tud@v@cornerx - \tud@marginleft - 1em\relax}
+\newlength{\tud@metacolR}
+\setlength{\tud@metacolR}{\dimexpr\paperwidth - \tud@marginright - \tud@v@cornerx\relax}
+% Descent space below the logo's text/shape baseline (≈19.14% of logo height,
+% derived from SVG proportions: (91.8471−74.2714)/91.8471 ≈ 0.1914).
+% Used to position the content block 15 mm below the baseline, not the image bottom.
+\newlength{\tud@logodescent}
+\setlength{\tud@logodescent}{\dimexpr\tud@logoheight * 191 / 1000\relax}
+\newcount\tud@supcount   % counts \and calls in \supervisor for column/row placement
+% Separator tokens used by \and inside supervisor tabular row.
+% Defined at package level so catcode 4 is guaranteed for &.
+% \csname tud@sup@sep@odd\endcsname → & (cell separator)
+% \csname tud@sup@sep@even\endcsname → \tabularnewline (row break, no extra skip)
+\@namedef{tud@sup@sep@odd}{&}
+\@namedef{tud@sup@sep@even}{\tabularnewline}
+
+%% ============================================================
+%% Internal metadata storage (use \def for reliable \ifx tests)
+%% ============================================================
+\def\tud@faculty{}
+\def\tud@department{}
+\def\tud@institute{}
+\def\tud@chair{}
+\def\tud@thesistype{}
+\def\tud@graduationshort{}
+\def\tud@graduationlong{}
+\def\tud@matriculationnumber{}
+\def\tud@supervisor{}
+\def\tud@professor{}
+% \subtitle is provided by KOMA-Script (scrreprt); it stores into \@subtitle
+\def\tud@email{}
+\def\tud@reviewer{}
+\def\tud@logovariant{\iflanguage{ngerman}{de}{en}}
+\def\tud@logocolor{blau}    % auto-set from bgcolor; override with \logocolor
+%% Title style (set by \titlestyle; defaults = shapes[1][tonal])
+%% Dunkelblau background, Brilliantblau shapes, variant 1, white text/logo
+\def\tud@titlestyle{shapes}
+\def\tud@titlebg{1}
+\def\tud@titleshapes{1}
+\def\tud@bgcolor{Dunkelblau}
+\def\tud@shapecolor{Brilliantblau}
+\def\tud@titlefgcolor{white}          % lower block (plain bg) text color
+\def\tud@titleupperfgcolor{white}    % upper block (on shape) text color
+\def\tud@titleaccentcolor{white}
+\def\tud@logocolor{weiss}
+\def\tud@shaperotation{90}          % variant 1: rotation step 2 × 45°
+\def\tud@shapescale{4}              % variant 1
+\def\tud@shapexoffset{-15cm}        % variant 1
+\def\tud@shapeyoffset{40cm}         % variant 1
+\def\tud@metalabelcolor{white}         % = bg-derived fg in shapes/tonal (Dunkelblau bg → white)
+
+%% For unicolor/legacy: set metalabelcolor from logo color (background-based).
+\newcommand{\tud@setmetalabelcolor}{%
+  \def\tud@ts@weiss{weiss}%
+  \ifx\tud@logocolor\tud@ts@weiss
+    \def\tud@metalabelcolor{Blau2}%
+  \else
+    \def\tud@metalabelcolor{Brilliantblau}%
+  \fi
+}
+%% For shapes style: set upper/lower text colors, metalabelcolor, and logo.
+%% Upper block (on shape):
+%%   Light shapes (Color2, Gelb, light grays, white) → Brilliantblau upper text.
+%%   Dark shapes → white upper text.
+%% Lower block (plain bg):
+%%   Labels (Gutachter:, Betreuer:, graduation) get the background-derived fg color.
+%%   Body text values get the shape color.
+%%   Exception: if both bg and shape are dark (both produce white), the shape color
+%%   would be unreadable on the dark bg → fall back to Blau2 for body text.
+\newcommand{\tud@autoshapecolor}{%
+  \def\tud@ts@white{white}%
+  % 1. Upper text color from shape lightness.
+  \def\tud@titleupperfgcolor{white}%
+  \@for\tud@iter:={Blau2,Violett2,Magenta2,Rot2,Orange2,Gelb1,Gelb2,%
+                   Oliv2,Gruen2,Tuerkis2,Grau40,Grau20,Grau10,white}\do{%
+    \ifx\tud@shapecolor\tud@iter
+      \def\tud@titleupperfgcolor{Brilliantblau}%
+    \fi
+  }%
+  % 2. Swap lower text and label colors.
+  %    \tud@titlefgcolor is the background-derived color (white or Brilliantblau).
+  %    After swap: labels = that color, body text values = shape color.
+  \edef\tud@ts@oldfg{\tud@titlefgcolor}%
+  \edef\tud@titlefgcolor{\tud@shapecolor}%
+  \edef\tud@metalabelcolor{\tud@ts@oldfg}%
+  % 3. Dark+dark fallback: if bg was dark (oldfg=white) AND shape is dark
+  %    (upperfgcolor=white), the shape color as body text is unreadable → Blau2.
+  \ifx\tud@ts@oldfg\tud@ts@white
+    \ifx\tud@titleupperfgcolor\tud@ts@white
+      \def\tud@titlefgcolor{Blau2}%
+    \fi
+  \fi
+  % 4. Title accent and logo follow upper block.
+  \edef\tud@titleaccentcolor{\tud@titleupperfgcolor}%
+  \ifx\tud@titleupperfgcolor\tud@ts@white
+    \def\tud@logocolor{weiss}%
+  \else
+    \def\tud@logocolor{blau}%
+  \fi
+}
+
+%% Auto-detect logo color + lower-block text color from \tud@bgcolor.
+%% Any dark TUD color → weiss logo + white text; otherwise blau logo + Dunkelblau text.
+\newcommand{\tud@autologocolor}{%
+  \def\tud@logocolor{blau}%
+  \def\tud@titlefgcolor{Brilliantblau}%
+  \def\tud@titleaccentcolor{Brilliantblau}%
+  \@for\tud@iter:={Brilliantblau,Dunkelblau,Blau1,Violett1,Magenta1,%
+                   Rot1,Orange1,Oliv1,Gruen1,Tuerkis1,Grau100,Grau80,Grau60}\do{%
+    \ifx\tud@bgcolor\tud@iter
+      \def\tud@logocolor{weiss}%
+      \def\tud@titlefgcolor{white}%
+      \def\tud@titleaccentcolor{white}%
+    \fi
+  }%
+}
+
+%% ============================================================
+%% Title page font elements
+%% Customize with \setkomafont{element}{instructions} or
+%% \addtokomafont{element}{instructions}.
+%% All defaults inherit \sffamily from the enclosing node.
+%% Color macros (\tud@titlefgcolor, \tud@titleaccentcolor) resolve
+%% at render time and reflect the active \titlestyle automatically.
+%%
+%% Four elements reuse standard KOMA names:
+%%   title     — main thesis title
+%%   subtitle  — subtitle
+%%   author    — author name on title page
+%%   subject   — thesis type and degree
+%%
+%% Two new elements cover parts with no KOMA equivalent:
+%%   tudorgunit — faculty / institute / chair line
+%%   tudmeta    — lower metadata (email, matrnr, supervisors, date)
+%%
+%% KOMA's built-in defaults for title/subtitle/author/subject differ from
+%% our layout, so we reset them here.
+%% ============================================================
+%% title/subtitle/author/tudorgunit are in the upper block (on the shape) →
+%%   use \tud@titleupperfgcolor (shape-based).
+%% subject/tudmeta are in the lower block (plain background) →
+%%   use \tud@titlefgcolor (background-based).
+%% All color macros resolve at render time via \usekomafont / \color{...}.
+\setkomafont{title}{\sffamily\fontsize{26pt}{30pt}\selectfont\bfseries\color{\tud@titleaccentcolor}}
+\setkomafont{subtitle}{\sffamily\fontsize{17pt}{21pt}\selectfont\color{\tud@titleupperfgcolor}}
+\setkomafont{author}{\sffamily\large\bfseries\color{\tud@titleupperfgcolor}}
+\setkomafont{subject}{\sffamily\large\color{\tud@titlefgcolor}}
+\newkomafont{tudorgunit}{\sffamily\footnotesize\linespread{1.05}\selectfont\color{\tud@titleupperfgcolor}}
+\newkomafont{tudmeta}{\sffamily\normalsize\color{\tud@titlefgcolor}}
+
+%% ============================================================
+%% User-facing metadata commands
+%% ============================================================
+\newcommand{\faculty}[1]{\def\tud@faculty{#1}}
+\newcommand{\department}[1]{\def\tud@department{#1}}
+\newcommand{\institute}[1]{\def\tud@institute{#1}}
+\newcommand{\chair}[1]{\def\tud@chair{#1}}
+%% Apply thesis-type color preset (bgcolor, shapecolor) without touching shape geometry.
+%% Called by \thesis; \titlestyle always overrides this when used explicitly after.
+\newcommand{\tud@applythesiscolors}[2]{%
+  \def\tud@bgcolor{#1}\def\tud@shapecolor{#2}%
+  \tud@autologocolor\tud@autoshapecolor
+}
+\newcommand{\thesis}[1]{%
+  \def\tud@thesistype{#1}%
+  \def\tud@ts@msc{master}\def\tud@ts@dip{diploma}\def\tud@ts@phd{phd}%
+  \ifx\tud@thesistype\tud@ts@msc
+    \tud@applythesiscolors{Tuerkis1}{Tuerkis2}%
+  \else\ifx\tud@thesistype\tud@ts@dip
+    \tud@applythesiscolors{Tuerkis1}{Tuerkis2}%
+  \else\ifx\tud@thesistype\tud@ts@phd
+    \tud@applythesiscolors{Violett1}{Violett2}%
+  \else % bachelor (default)
+    \tud@applythesiscolors{Dunkelblau}{Brilliantblau}%
+  \fi\fi\fi
+}
+\newcommand{\graduation}[2][]{\def\tud@graduationshort{#1}\def\tud@graduationlong{#2}}
+\newcommand{\matriculationnumber}[1]{\def\tud@matriculationnumber{#1}}
+\newcommand{\supervisor}[1]{\def\tud@supervisor{#1}}
+\newcommand{\professor}[1]{\def\tud@professor{#1}}
+% \subtitle is provided by KOMA-Script; no redefinition needed here
+\newcommand{\email}[1]{\def\tud@email{#1}}
+\newcommand{\reviewer}[1]{\def\tud@reviewer{#1}}
+\newcommand{\logovariant}[1]{\def\tud@logovariant{#1}}
+\newcommand{\logocolor}[1]{\def\tud@logocolor{#1}}
+% \titlestyle — two overloaded signatures (dispatched on mandatory #5):
+%
+%   \titlestyle[textcolor][bgcolor]{unicolor}
+%     Solid color background. bgcolor defaults to Brilliantblau.
+%     textcolor is inferred from bgcolor via \tud@autologocolor unless overridden.
+%
+%   \titlestyle[variant][accent|tonal]{shapes}
+%     Shapes style. variant = 1–5 (default 5). scheme = accent or tonal (default tonal).
+%
+%   \titlestyle[variant][textcolor][shapecolor][bgcolor]{shapes}
+%     Shapes style, fully custom. All optionals default to the tonal preset values.
+%
+\NewDocumentCommand{\titlestyle}{o o o o m}{%
+  %--- reset all shape/bg/color state ---%
+  \def\tud@titlestyle{#5}%
+  \def\tud@titlebg{0}\def\tud@titleshapes{0}%
+  \def\tud@bgcolor{white}\def\tud@shapecolor{Brilliantblau}%
+  \def\tud@shaperotation{0}%
+  \def\tud@shapescale{1}%
+  \def\tud@shapexoffset{0pt}%
+  \def\tud@shapeyoffset{-43.5mm}%
+  %--- dispatch on mandatory style name ---%
+  \def\tud@ts@uc{unicolor}%
+  \def\tud@ts@sh{shapes}%
+  \def\tud@ts@lg{legacy}%
+  %
+  \ifx\tud@titlestyle\tud@ts@uc
+    %--- unicolor: #1=textcolor (opt), #2=bgcolor (opt) ---%
+    \def\tud@titlebg{1}%
+    \IfNoValueTF{#2}%
+      {\def\tud@bgcolor{Brilliantblau}}%
+      {\def\tud@bgcolor{#2}}%
+    \tud@autologocolor
+    \IfNoValueF{#1}{\def\tud@titlefgcolor{#1}}%
+    \tud@setmetalabelcolor
+    % unicolor has no shape; sync upper fg with lower fg
+    \edef\tud@titleupperfgcolor{\tud@titlefgcolor}%
+  \fi
+  %
+  \ifx\tud@titlestyle\tud@ts@sh
+    \def\tud@titlebg{1}\def\tud@titleshapes{1}%
+    \IfNoValueTF{#3}{%
+      %--- 2-optional path: #1=variant (opt), #2=accent|tonal (opt) ---%
+      \def\tud@ts@accent{accent}%
+      \IfNoValueTF{#2}{\def\tud@ts@scheme{tonal}}{\def\tud@ts@scheme{#2}}%
+      \ifx\tud@ts@scheme\tud@ts@accent
+        \def\tud@bgcolor{white}\def\tud@shapecolor{Blau2}%
+      \else
+        \def\tud@bgcolor{Dunkelblau}\def\tud@shapecolor{Brilliantblau}%
+      \fi
+      \tud@autologocolor
+      \tud@autoshapecolor
+      \IfNoValueTF{#1}{\titleshapevariant{5}}{\titleshapevariant{#1}}%
+    }{%
+      %--- 4-optional path: #1=variant, #2=lower-textcolor, #3=shapecolor, #4=bgcolor ---%
+      % Upper text color is always auto-detected from shape via \tud@autoshapecolor.
+      % #2 overrides only the lower-block text color (\tud@titlefgcolor).
+      \def\tud@bgcolor{Dunkelblau}\def\tud@shapecolor{Brilliantblau}%
+      \tud@autologocolor
+      \IfNoValueF{#4}{\def\tud@bgcolor{#4}\tud@autologocolor}%
+      \IfNoValueF{#3}{\def\tud@shapecolor{#3}}%
+      \IfNoValueF{#2}{\def\tud@titlefgcolor{#2}}%
+      \tud@autoshapecolor
+      \IfNoValueTF{#1}{\titleshapevariant{5}}{\titleshapevariant{#1}}%
+    }%
+  \fi
+  \ifx\tud@titlestyle\tud@ts@lg
+    \def\tud@titlebg{0}%
+    \def\tud@titleshapes{0}%
+    \def\tud@bgcolor{white}%
+    \def\tud@shapecolor{Brilliantblau}%
+    \def\tud@titlefgcolor{black}%
+    \def\tud@titleupperfgcolor{black}%
+    \def\tud@titleaccentcolor{Brilliantblau}%
+    \def\tud@logocolor{blau}%
+    \def\tud@metalabelcolor{Brilliantblau}%
+  \fi
+}
+\newcommand{\titlebgcolor}[1]{\def\tud@bgcolor{#1}\tud@autologocolor}
+\newcommand{\titleshapecolor}[1]{\def\tud@shapecolor{#1}\tud@autoshapecolor}
+\newcommand{\titletextcolor}[1]{\def\tud@titlefgcolor{#1}}
+% #1 = rotation step 0–7; stored angle = #1 × 45°.
+% For an arbitrary angle bypass: \def\tud@shaperotation{DEG}
+\newcommand{\titleshaperotation}[1]{%
+  \edef\tud@shaperotation{\the\numexpr #1*45\relax}%
+}
+\newcommand{\titleshapescale}[1]{\def\tud@shapescale{#1}}
+\newcommand{\titleshapeoffset}[2]{\def\tud@shapexoffset{#1}\def\tud@shapeyoffset{#2}}
+%% Predefined shape placement presets (used by \titlestyle{shapes} automatically).
+%% Can also be called manually after \titlestyle to override the variant.
+%% Each preset sets scale, rotation step (multiples of 45°), and page-center offset.
+\newcommand{\titleshapevariant}[1]{%
+  \ifcase#1\relax
+  \or % 1 — 90°, large, shifted to upper-left
+    \titleshapescale{4}\titleshaperotation{2}\titleshapeoffset{-15cm}{40cm}%
+  \or % 2 — 90°, medium, near center
+    \titleshapescale{2.75}\titleshaperotation{2}\titleshapeoffset{-10cm}{2cm}%
+  \or % 3 — 0°, 2×, centered
+    \titleshapescale{2}\titleshaperotation{0}\titleshapeoffset{0cm}{0cm}%
+  \or % 4 — 0°, large, shifted to lower-right
+    \titleshapescale{4}\titleshaperotation{0}\titleshapeoffset{25cm}{-15cm}%
+  \or % 5 — 0°, medium-large, shifted to lower-right
+    \titleshapescale{2.75}\titleshaperotation{0}\titleshapeoffset{12.5cm}{-12.5cm}%
+  \fi
+}
+
+%% ============================================================
+%% Helper: thesis type label (bilingual)
+%% ============================================================
+\newcommand{\tud@thesislabel}{%
+  \def\@tud@tmpa{master}\def\@tud@tmpb{diploma}\def\@tud@tmpc{phd}%
+  \ifx\tud@thesistype\@tud@tmpa
+    \iflanguage{ngerman}{Masterarbeit}{Master's Thesis}%
+  \else\ifx\tud@thesistype\@tud@tmpb
+    \iflanguage{ngerman}{Diplomarbeit}{Diploma Thesis}%
+  \else\ifx\tud@thesistype\@tud@tmpc
+    \iflanguage{ngerman}{Dissertation}{Doctoral Thesis}%
+  \else
+    \iflanguage{ngerman}{Bachelorarbeit}{Bachelor's Thesis}%
+  \fi\fi\fi
+}
+
+%% Bilingual labels
+\newcommand{\tud@lbl@supervisor}{\iflanguage{ngerman}{Betreuer}{Supervisor}}
+\newcommand{\tud@lbl@reviewer}{\iflanguage{ngerman}{Gutachter}{Reviewer}}
+\newcommand{\tud@lbl@secondreviewer}{\iflanguage{ngerman}{Zweiter Gutachter}{Second Reviewer}}
+\newcommand{\tud@lbl@submitted}{\iflanguage{ngerman}{Eingereicht am}{Date of Submission}}
+\newcommand{\tud@lbl@matrnr}{\iflanguage{ngerman}{Matrikelnummer}{Matriculation Number}}
+\newcommand{\tud@lbl@supervisors}{\iflanguage{ngerman}{Betreuer}{Supervisors}}
+
+%% ============================================================
+%% \maketitle — TUD CD title page
+%%
+%% Uses tikz overlays for:
+%%   - full-page background fill (unicolor / shapes styles)
+%%   - TUD CD logo-mark shape polygons (shapes style)
+%%   - TUD logo, top-left
+%%   - title / thesis-type content block, upper-left
+%%   - author / supervisor / date metadata block, lower-left
+%% All coordinates are relative to current page corners so the
+%% layout is independent of the main document's margin settings.
+%% ============================================================
+\renewcommand{\maketitle}{%
+  \begin{titlepage}%
+    \thispagestyle{empty}%
+    % Force Noto Sans for this title page regardless of the document's active font.
+    % Both overrides are scoped to the titlepage group and revert automatically.
+    \ifPDFTeX
+      \renewcommand{\sfdefault}{\tud@notosansfamily}%
+    \else
+      \setsansfont{Noto Sans}%
+    \fi
+    \begin{tikzpicture}[remember picture, overlay]
+      \def\tud@flag@one{1}%
+      %--- Full-page background fill ---%
+      \ifx\tud@titlebg\tud@flag@one
+        \fill[\tud@bgcolor]
+          (current page.south west) rectangle (current page.north east);
+      \fi
+      %--- Shape polygons (shapes-tonal / shapes-accent) ---%
+      \ifx\tud@titleshapes\tud@flag@one
+        \setlength{\tud@shapeunit}{\dimexpr\paperwidth/600\relax}%
+        \setlength{\tud@effectiveshapeunit}{\tud@shapescale\tud@shapeunit}%
+        \begin{scope}[
+          shift={(current page.center)},
+          xshift=\tud@shapexoffset,
+          yshift=\tud@shapeyoffset,
+          rotate=\tud@shaperotation,
+          x=\tud@effectiveshapeunit,
+          y=\tud@effectiveshapeunit,
+        ]
+          \fill[\tud@shapecolor]  % Fragment 1 (upper-right, centered at origin)
+            (300,-56.5)--(93,-93)--(93,93)--(-114,300)--(124.3,300)--(300,124.3)--cycle;
+          \fill[\tud@shapecolor]  % Fragment 2 (lower-left, centered at origin)
+            (-300,56.5)--(-93,93)--(-93,-93)--(114,-300)--(-124.3,-300)--(-300,-124.3)--cycle;
+        \end{scope}
+      \fi
+      %--- TUD Logo: top-left, inset by margins ---%
+      \node[anchor=north west, inner sep=0pt, outer sep=0pt]
+        at ([xshift=\tud@marginleft, yshift=-\tud@margintop]current page.north west)
+        {\includegraphics[height=\tud@logoheight]{figures/tud-logo-\tud@logocolor-\tud@logovariant}};
+      %--- Node A: Organisational unit — north-west, below logo ---%
+      \node[name=tudorgunit, anchor=north west, inner sep=0pt, outer sep=0pt,
+            text width=\tud@textwidth, align=left]
+        at ([xshift=\tud@marginleft,
+             yshift=\the\dimexpr-\tud@margintop-\tud@logoheight+\tud@logodescent-\tud@margintop\relax]%
+            current page.north west)
+        {\usekomafont{tudorgunit}%
+        \begin{minipage}[t]{\tud@textwidth}
+          \raggedright
+          \tud@faculty
+          \ifx\tud@institute\@empty\else\par \tud@institute\fi
+          \ifx\tud@chair\@empty\else\par \tud@chair\fi
+        \end{minipage}%
+        };
+      %--- Node B: Author + email — south-west, 2×margintop above shape lower boundary ---%
+      \node[name=tudauthor, anchor=south west, inner sep=0pt, outer sep=0pt,
+            text width=\tud@textwidth, align=left]
+        at ([xshift=\tud@marginleft, yshift=\tud@authorblockY]current page.south west)
+        {%
+          \setlength{\parskip}{0pt}%
+          \setlength{\parindent}{0pt}%
+          \raggedright\sffamily%
+          {\usekomafont{author}\@author\par}%
+          \ifx\tud@email\@empty\else
+            {\usekomafont{tudmeta}\color{\tud@titleupperfgcolor}\tud@email\par}%
+          \fi
+        };
+      %--- Node C: Title + subtitle — west anchor, vertically centered between A and B ---%
+      \coordinate (tudmid) at ($(tudorgunit.south west)!0.5!(tudauthor.north west)$);
+      \node[anchor=west, inner sep=0pt, outer sep=0pt,
+            text width=\tud@textwidth, align=left]
+        at ([xshift=\tud@marginleft]current page.west |- tudmid)
+        {%
+          \setlength{\parskip}{0pt}%
+          \setlength{\parindent}{0pt}%
+          \raggedright\sffamily%
+          {\usekomafont{title}\@title\par}%
+          \ifx\@subtitle\@empty\else
+            \vspace{6mm}%
+            {\usekomafont{subtitle}\@subtitle\par}%
+          \fi
+        };
+      %--- Metadata block: anchored to bottom-left ---%
+      \node[anchor=south west, inner sep=0pt, outer sep=0pt,
+            text width=\tud@textwidth, align=left]
+        at ([xshift=\tud@marginleft, yshift=\tud@marginbottom]current page.south west)
+        {%
+          \setlength{\parskip}{1.5pt}%
+          \setlength{\parindent}{0pt}%
+          \raggedright\sffamily\color{\tud@titlefgcolor}%
+          % Thesis type + degree abbreviation (treated as a label)
+          {\usekomafont{subject}\color{\tud@metalabelcolor}%
+            \tud@thesislabel%
+            \ifx\tud@graduationshort\@empty\else\space(\tud@graduationshort)\fi
+          \par}%
+          \vspace{\baselineskip}%
+          % Meta: label above value, two-column layout.
+          % l columns (not p{}) so that \and → & is recognized by \halign.
+          % Each section: label row, then value row(s).
+          % \and counter: odd calls → & (right col); even → \\[skip] (new row left).
+          %
+          % Pre-scan to detect multiple supervisors for plural label
+          \global\let\tud@ismultisuper\@empty
+          \ifx\tud@supervisor\@empty\else
+            \setbox\z@=\hbox{%
+              \def\and{\global\def\tud@ismultisuper{x}}%
+              \tud@supervisor
+            }%
+          \fi
+          {\usekomafont{tudmeta}%
+          \def\and{\newline}%
+          \begin{tabular}[t]{@{}p{\tud@metacolL}@{\hspace{1em}}p{\tud@metacolR}@{}}
+            % --- Row 1: Reviewer (left) ---
+            \ifx\tud@professor\@empty\else
+              \textcolor{\tud@metalabelcolor}{\tud@lbl@reviewer}%
+            \fi
+            & \\
+            \ifx\tud@professor\@empty\else
+              \tud@professor
+            \fi
+            & \\[\medskipamount]
+            % --- Row 2: Second Reviewer (left) | Matrnr (right) ---
+            \ifx\tud@reviewer\@empty\else
+              \textcolor{\tud@metalabelcolor}{\tud@lbl@secondreviewer}%
+            \fi
+            &
+            \ifx\tud@matriculationnumber\@empty\else
+              \textcolor{\tud@metalabelcolor}{\tud@lbl@matrnr}%
+            \fi
+            \\
+            \ifx\tud@reviewer\@empty\else
+              \tud@reviewer
+            \fi
+            &
+            \ifx\tud@matriculationnumber\@empty\else
+              \tud@matriculationnumber
+            \fi
+            \\[\medskipamount]
+            % --- Row 3: Supervisor(s) (left) | Date (right, starts at first supervisor height) ---
+            \ifx\tud@supervisor\@empty\else
+              \textcolor{\tud@metalabelcolor}{%
+                \ifx\tud@ismultisuper\@empty
+                  \tud@lbl@supervisor
+                \else
+                  \tud@lbl@supervisors
+                \fi
+              }%
+            \fi
+            &
+            \textcolor{\tud@metalabelcolor}{\tud@lbl@submitted}
+            \\
+            \ifx\tud@supervisor\@empty\else
+              \tud@supervisor
+            \fi
+            &
+            \@date
+          \end{tabular}%
+          \par}%
+        };
+    \end{tikzpicture}%
+    \null\vfill  % ensure the titlepage spans a full page
+  \end{titlepage}%
+}

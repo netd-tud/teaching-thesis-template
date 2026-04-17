@@ -1,0 +1,174 @@
+%% tud-thesis.sty
+%% General TUD thesis styling: colored headings, statutory declaration page,
+%% chapter thumbs, and the research-question tcolorbox environment.
+%%
+%% Provides:
+%%   - Colored, sans-serif chapter/section headings via KOMA's \setkomafont.
+%%     Default color is Brilliantblau; override after \usepackage{tud-thesis}:
+%%       \renewcommand{\headingcolor}{black}
+%%   - \confirmation — typesets a bilingual (DE/EN) statutory declaration page,
+%%     using \@author and \@date from the document preamble.
+%%   - Chapter thumbs (sidebar chapter markers) via chapterthumb + scrlayer-scrpage.
+%%   - research-question tcolorbox environment, automatically colored from the
+%%     active \titlestyle (background color → frame + fill).
+%%
+%% Requires: KOMA-Script class (scrbook/scrreprt/scrartcl), tud-colors, babel,
+%%           tcolorbox, fontawesome5.
+%% tud-titlepage must be loaded before tud-thesis so that \tud@bgcolor etc. exist.
+
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{tud-thesis}[2026/04/13 TUD Thesis Styling]
+
+\@ifundefined{setkomafont}{%
+  \PackageError{tud-thesis}%
+    {A KOMA-Script class is required}%
+    {Load scrreprt, scrartcl, or scrbook before this package.}%
+}{}
+\RequirePackage{tud-colors}
+
+%% ============================================================
+%% Heading font and color
+%% \headingcolor defaults to Brilliantblau; override with
+%%   \renewcommand{\headingcolor}{black}
+%% after \usepackage{tud-thesis} for monochrome output.
+%% ============================================================
+\newcommand{\headingcolor}{Brilliantblau}
+\setkomafont{disposition}{\sffamily\color{\headingcolor}}
+% TOC / LOF / LOT entries: sans-serif to match heading style
+\addtokomafont{chapterentry}{\sffamily}
+\DeclareTOCStyleEntry[entryformat=\sffamily,pagenumberformat=\sffamily]{tocline}{section}
+\DeclareTOCStyleEntry[entryformat=\sffamily,pagenumberformat=\sffamily]{tocline}{subsection}
+\DeclareTOCStyleEntry[entryformat=\sffamily,pagenumberformat=\sffamily]{tocline}{figure}
+\DeclareTOCStyleEntry[entryformat=\sffamily,pagenumberformat=\sffamily]{tocline}{table}
+
+%% ============================================================
+%% tcolorbox + fontawesome5 (required by research-question)
+%% ============================================================
+\RequirePackage{tcolorbox}
+\tcbuselibrary{many}
+\usetikzlibrary{calc}
+\RequirePackage{fontawesome5}
+
+%% ============================================================
+%% Chapter thumbs (sidebar chapter markers)
+%% Box and text colors are set by \tudupdatecolors at \begin{document}
+%% (see below). Override after \usepackage{tud-thesis}, e.g.:
+%%   \renewcommand*{\chapterthumbboxcolor}{Dunkelblau}
+%% ============================================================
+\RequirePackage{chapterthumb}
+\RequirePackage{scrlayer-scrpage}
+\AddLayersToPageStyle{@everystyle@}{chapterthumb}
+\addtokomafont{chapterthumb}{\bfseries}
+\renewcommand*{\chapterthumbboxcolor}{Dunkelblau} % updated by \tudupdatecolors
+\renewcommand*{\chapterthumbcolor}{white}            % updated by \tudupdatecolors
+\renewcommand*{\chapterthumbheight}{10mm}
+\renewcommand*{\firstchapterthumbskip}{0sp}
+
+%% ============================================================
+%% \confirmation — statutory declaration page
+%% ============================================================
+\newcommand{\confirmation}{%
+  \chapter*{%
+    \iflanguage{ngerman}{Selbstständigkeitserklärung}{Statutory Declaration}%
+  }%
+  \iflanguage{ngerman}{%
+    Ich erkläre, dass ich die vorliegende Arbeit selbstständig, unter Angabe
+    aller Zitate und nur unter Verwendung der angegebenen Literatur und
+    Hilfsmittel angefertigt habe.%
+  }{%
+    I hereby declare that I prepared this thesis independently and without
+    any unauthorized assistance, that I have not used sources or means other
+    than those indicated, and that all passages taken verbatim or in substance
+    from published or unpublished works have been acknowledged as such.%
+  }%
+  \par\bigskip\noindent
+  Dresden,\space\@date\hfill\@author%
+}
+
+%% ============================================================
+%% research-question environment
+%% A tcolorbox for listing research questions with a styled title tab.
+%%
+%% Colors are automatically derived from the active \titlestyle at
+%% \begin{document} via \tudupdatecolors:
+%%   \researchquestioncolor  — frame + title tab (= \tud@bgcolor)
+%%   tud@rqbg                — named color for fill (= \tud@bgcolor!20!white)
+%%
+%% To override after \usepackage{tud-thesis}:
+%%   \renewcommand{\researchquestioncolor}{Rot1}
+%% To rename the title tab:
+%%   \renewcommand{\researchquestiontitle}{Forschungsfragen}
+%%
+%% If \titlestyle is called inside the document body, call \tudupdatecolors
+%% afterwards to re-sync colors.
+%% ============================================================
+\newcommand{\researchquestiontitle}{Research Questions}
+\newcommand{\researchquestioncolor}{Dunkelblau}  % \edef'd to \tud@bgcolor by \tudupdatecolors
+\newenvironment{research-question}{%
+  \renewcommand{\labelitemi}{\color{\researchquestioncolor}\faIcon{caret-right}}%
+  \begin{itemize}[leftmargin=0.5em, labelwidth=0.5em, rightmargin=0.0em,
+                  itemsep=0pt, labelsep=0.3em]%
+}{\end{itemize}}
+\tcolorboxenvironment{research-question}{
+  title={\researchquestiontitle},
+  left=0.5em,
+  right=0.5em,
+  fonttitle=\sffamily\bfseries,
+  width=\linewidth-3pt,
+  enhanced,
+  attach boxed title to top left,
+  coltitle=white,
+  colback=\researchquestioncolor!20!white,
+  arc=2pt,
+  boxed title style={empty, arc=0pt, outer arc=0pt, boxrule=0pt},
+  frame style={empty, arc=0pt, outer arc=0pt, boxrule=0pt},
+  underlay boxed title={
+    \draw[fill=\researchquestioncolor, draw=\researchquestioncolor, line width=2pt]
+      ([yshift=-2pt]title.north west)
+      arc[radius=2pt, start angle=180, end angle=90]
+      -- (title.north east)
+      arc[radius=3pt, start angle=90, end angle=45]
+      -- ($(title.north east) + (\tcboxedtitleheight,-\tcboxedtitleheight)$)
+      -- (title.south west) -- cycle;
+  },
+  frame code={
+    \draw[fill=\researchquestioncolor!20!white, draw=\researchquestioncolor, line width=2pt]
+      (frame.north west)
+      -- ([yshift=2pt]frame.south west)
+      arc[radius=2pt, start angle=180, end angle=270]
+      -- ([xshift=-2pt]frame.south east)
+      arc[radius=2pt, start angle=-90, end angle=0]
+      -- ([yshift=-2pt]frame.north east)
+      arc[radius=2pt, start angle=0, end angle=90]
+      -- cycle;
+  }
+}
+
+%% ============================================================
+%% \tudupdatecolors — sync theme-linked colors to the active \titlestyle
+%%
+%% Called automatically after every \thesis{} call via the patched
+%% \tud@applythesiscolors below. If \titlestyle is called inside the
+%% document body, call \tudupdatecolors afterwards to re-sync.
+%% ============================================================
+\newcommand{\tudupdatecolors}{%
+  %% Chapterthumb: box = bgcolor
+  \renewcommand*{\chapterthumbboxcolor}{\tud@bgcolor}%
+  %% Chapterthumb: text — white for dark bg, Brilliantblau for light bg
+  \renewcommand*{\chapterthumbcolor}{white}%
+  \@for\tud@ts@iter:={Blau2,Violett2,Magenta2,Rot2,Orange2,Gelb1,Gelb2,%
+                      Oliv2,Gruen2,Tuerkis2,Grau40,Grau20,Grau10,white}\do{%
+    \ifx\tud@bgcolor\tud@ts@iter
+      \renewcommand*{\chapterthumbcolor}{Brilliantblau}%
+    \fi
+  }%
+  %% Research-question: frame + fill derive from bgcolor; fill = bgcolor!20!white
+  \edef\researchquestioncolor{\tud@bgcolor}%
+}
+%% Patch \tud@applythesiscolors (called by \thesis{}) so \tudupdatecolors
+%% runs immediately after the colors are set, even in the document body.
+\let\tud@thesis@orig@applycolors\tud@applythesiscolors
+\def\tud@applythesiscolors#1#2{%
+  \tud@thesis@orig@applycolors{#1}{#2}%
+  \tudupdatecolors
+}

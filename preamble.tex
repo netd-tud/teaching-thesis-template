@@ -1,0 +1,102 @@
+\usepackage{iftex} % engine detection — also loaded by noto, but needed earlier
+% pdfLaTeX needs T1 encoding for correct < > glyphs (esp. in minted/fancyvrb).
+% LuaLaTeX uses OpenType natively — fontenc is irrelevant there.
+\ifPDFTeX
+  \usepackage[T1]{fontenc}
+\fi
+\usepackage{noto}
+
+\usepackage{babel}
+\usepackage{isodate}
+\usepackage{pdfpages}
+\usepackage{hyphenat}
+\usepackage[onehalfspacing]{setspace}
+\usepackage[
+  style=alphabetic,
+  backend=biber,
+  url=false,
+  doi=false,
+  isbn=false,
+  hyperref,
+]{biblatex}
+
+% make all links clickable but hide ugly boxes
+\usepackage[hidelinks]{hyperref}
+\usepackage{amsmath} % must precede cleveref (tcolorbox also loads it internally)
+% automatically insert Fig. X in the text with \cref{..}
+\usepackage[capitalise,nameinlink,noabbrev]{cleveref}
+
+\usepackage[colorinlistoftodos,prependcaption,textsize=tiny]{todonotes}
+
+\usepackage{graphicx}
+\graphicspath{ {./figures/} }
+
+\usepackage{svg}
+
+% if you need mathy stuff
+\newtheorem{lem}{Lemma}
+\crefname{lem}{Lemma}{Lemmas}
+\newtheorem{thm}{Theorem}
+\crefname{thm}{Theorem}{Theorems}
+\newtheorem{defs}{Definition}
+\crefname{defs}{Def.}{Defs.}
+
+\usepackage{blindtext}
+
+\usepackage{csquotes}
+
+\usepackage{caption}
+\captionsetup{font=normalfont,labelfont=normalfont,labelsep=space}
+\usepackage{floatrow}
+\floatsetup{font=normalfont}
+\floatsetup[table]{style=plaintop}
+\captionsetup{singlelinecheck=off,format=hang,justification=raggedright}
+\DeclareCaptionSubType[alph]{figure}
+\DeclareCaptionSubType[alph]{table}
+\captionsetup[subfloat]{labelformat=brace,list=off}
+
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{tabulary}
+\usepackage{tabu}
+\usepackage{longtable}
+\usepackage{multirow}
+
+\usepackage{quoting}
+
+\usepackage[babel]{microtype}
+
+\usepackage{xfrac}
+
+\usepackage{enumitem}
+\setlist[itemize]{noitemsep}
+
+\usepackage{ellipsis}
+\let\ellipsispunctuation\relax
+
+\input{minted} % code styles (minted replaces listings)
+
+% use this custom environment for equations
+\newenvironment{conditions}
+  {\par\vspace{\abovedisplayskip}\noindent\begin{tabular}{>{$}l<{$} @{${}={}$} l}}
+  {\end{tabular}\par\vspace{\belowdisplayskip}}
+
+% \usepackage{float} % superseded by floatrow
+
+% Page layout — standard German thesis margins (overrides KOMA typearea)
+\usepackage[
+  a4paper,
+  inner=1.5cm,
+  outer=3cm,
+  top=1.5cm,
+  bottom=25mm,
+  includehead,
+  twoside=semi,
+]{geometry}
+
+\usepackage{tud-colors}    % TUD CD color palette
+\usepackage{tud-titlepage} % title page + metadata commands (\faculty, \thesis, ...)
+\usepackage{tud-thesis}    % heading styling + \confirmation + chapterthumb + research-question
+% For black headings:           \renewcommand{\headingcolor}{black}
+% For custom research-question: \renewcommand{\researchquestioncolor}{Rot1}

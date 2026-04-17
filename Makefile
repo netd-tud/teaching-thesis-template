@@ -3,6 +3,7 @@ ifeq (,$(BIBINPUTS))
 endif
 
 export BIBINPUTS := $(BIBINPUTS):$(CURDIR)
+export TEXINPUTS := ./tex-sty//:$(TEXINPUTS)
 
 NAME = thesis
 INPUTS = $(filter-out $(NAME).tex,$(wildcard *.tex tex/*.tex))
@@ -10,7 +11,15 @@ FIGS = $(wildcard figures/*[^~])
 FIG_FRAGMENTS_NAME := $(patsubst %.dpth,%,$(wildcard figures/*.dpth))
 BIBS = $(wildcard *.bib)
 TEX_MACROS = ie,eg,verb,fi,iffalse,crefrange,linebreak
-LATEXMK_FLAGS = -pdf -e '$$pdflatex=q/pdflatex %O -shell-escape %S/' -use-make
+LATEX ?= pdflatex
+ifeq ($(LATEX),lualatex)
+  LATEXMK_ENGINE_FLAG = -lualatex
+else ifeq ($(LATEX),xelatex)
+  LATEXMK_ENGINE_FLAG = -xelatex
+else
+  LATEXMK_ENGINE_FLAG = -pdf
+endif
+LATEXMK_FLAGS = $(LATEXMK_ENGINE_FLAG) -e '$$$(LATEX)=q/$(LATEX) %O -shell-escape %S/' -use-make
 
 ifeq (1,$(FORCE))
   LATEXMK_FLAGS += -f
