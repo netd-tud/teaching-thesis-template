@@ -3,6 +3,7 @@ ifeq (,$(BIBINPUTS))
 endif
 
 export BIBINPUTS := $(BIBINPUTS):$(CURDIR)
+export TEXINPUTS := ./tex-sty//:$(TEXINPUTS)
 
 NAME = thesis
 INPUTS = $(filter-out $(NAME).tex,$(wildcard *.tex tex/*.tex))
