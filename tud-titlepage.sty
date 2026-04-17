@@ -32,6 +32,11 @@
 \RequirePackage{graphicx}
 \RequirePackage{tikz}
 \usetikzlibrary{calc}
+\RequirePackage{iftex}
+\RequirePackage{noto}  % guarantees Noto Sans NFSS families on all engines
+% Capture the NFSS family name noto just set — used to force Noto Sans in \maketitle
+% regardless of what the document's \sfdefault is at render time.
+\edef\tud@notosansfamily{\sfdefault}
 % \iflanguage is provided by babel (loaded in thesis.tex)
 
 %% ============================================================
@@ -207,12 +212,12 @@
 %% subject/tudmeta are in the lower block (plain background) →
 %%   use \tud@titlefgcolor (background-based).
 %% All color macros resolve at render time via \usekomafont / \color{...}.
-\setkomafont{title}{\fontsize{26pt}{30pt}\selectfont\bfseries\color{\tud@titleaccentcolor}}
-\setkomafont{subtitle}{\fontsize{17pt}{21pt}\selectfont\color{\tud@titleupperfgcolor}}
-\setkomafont{author}{\large\bfseries\color{\tud@titleupperfgcolor}}
-\setkomafont{subject}{\large\color{\tud@titlefgcolor}}
-\newkomafont{tudorgunit}{\footnotesize\color{\tud@titleupperfgcolor}}
-\newkomafont{tudmeta}{\normalsize\color{\tud@titlefgcolor}}
+\setkomafont{title}{\sffamily\fontsize{26pt}{30pt}\selectfont\bfseries\color{\tud@titleaccentcolor}}
+\setkomafont{subtitle}{\sffamily\fontsize{17pt}{21pt}\selectfont\color{\tud@titleupperfgcolor}}
+\setkomafont{author}{\sffamily\large\bfseries\color{\tud@titleupperfgcolor}}
+\setkomafont{subject}{\sffamily\large\color{\tud@titlefgcolor}}
+\newkomafont{tudorgunit}{\sffamily\footnotesize\linespread{1.05}\selectfont\color{\tud@titleupperfgcolor}}
+\newkomafont{tudmeta}{\sffamily\normalsize\color{\tud@titlefgcolor}}
 
 %% ============================================================
 %% User-facing metadata commands
@@ -394,6 +399,13 @@
 \renewcommand{\maketitle}{%
   \begin{titlepage}%
     \thispagestyle{empty}%
+    % Force Noto Sans for this title page regardless of the document's active font.
+    % Both overrides are scoped to the titlepage group and revert automatically.
+    \ifPDFTeX
+      \renewcommand{\sfdefault}{\tud@notosansfamily}%
+    \else
+      \setsansfont{Noto Sans}%
+    \fi
     \begin{tikzpicture}[remember picture, overlay]
       \def\tud@flag@one{1}%
       %--- Full-page background fill ---%
@@ -429,17 +441,13 @@
         at ([xshift=\tud@marginleft,
              yshift=\the\dimexpr-\tud@margintop-\tud@logoheight+\tud@logodescent-\tud@margintop\relax]%
             current page.north west)
-        {%
-          \setlength{\parskip}{0pt}%
-          \setlength{\parindent}{0pt}%
-          \raggedright\sffamily%
-          \ifx\tud@faculty\@empty\else
-            {\usekomafont{tudorgunit}%
-              \tud@faculty\rule[-\dp\strutbox]{0pt}{\dp\strutbox}%
-              \ifx\tud@institute\@empty\else\\\tud@institute\rule[-\dp\strutbox]{0pt}{\dp\strutbox}\fi%
-              \ifx\tud@chair\@empty\else\\\tud@chair\fi%
-            }%
-          \fi
+        {\usekomafont{tudorgunit}%
+        \begin{minipage}[t]{\tud@textwidth}
+          \raggedright
+          \tud@faculty
+          \ifx\tud@institute\@empty\else\par \tud@institute\fi
+          \ifx\tud@chair\@empty\else\par \tud@chair\fi
+        \end{minipage}%
         };
       %--- Node B: Author + email — south-west, 2×margintop above shape lower boundary ---%
       \node[name=tudauthor, anchor=south west, inner sep=0pt, outer sep=0pt,
