@@ -34,10 +34,12 @@
 %% ============================================================
 \newcommand{\headingcolor}{Brilliantblau}
 \setkomafont{disposition}{\sffamily\color{\headingcolor}}
-% TOC entries: sans-serif to match heading style
+% TOC / LOF / LOT entries: sans-serif to match heading style
 \addtokomafont{chapterentry}{\sffamily}
 \DeclareTOCStyleEntry[entryformat=\sffamily,pagenumberformat=\sffamily]{tocline}{section}
 \DeclareTOCStyleEntry[entryformat=\sffamily,pagenumberformat=\sffamily]{tocline}{subsection}
+\DeclareTOCStyleEntry[entryformat=\sffamily,pagenumberformat=\sffamily]{tocline}{figure}
+\DeclareTOCStyleEntry[entryformat=\sffamily,pagenumberformat=\sffamily]{tocline}{table}
 
 %% ============================================================
 %% tcolorbox + fontawesome5 (required by research-question)
